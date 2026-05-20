@@ -1,4 +1,20 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: [
+      "google-ads-api",
+      "@anthropic-ai/sdk",
+    ],
+  },
+  async headers() {
+    return [{
+      source: "/api/:path*",
+      headers: [
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "X-Frame-Options", value: "DENY" },
+      ],
+    }];
+  },
+};
 
 export default nextConfig;
