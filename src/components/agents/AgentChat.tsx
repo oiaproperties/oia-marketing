@@ -29,6 +29,8 @@ interface AgentChatProps {
   description: string;
   quickActions: string[];
   icon: React.ReactNode;
+  autoSend?: string; // When set, auto-sends this message once
+  onAutoSendDone?: () => void;
 }
 
 function renderBlocks(blocks: Block[]) {
@@ -58,6 +60,8 @@ export default function AgentChat({
   description,
   quickActions,
   icon,
+  autoSend,
+  onAutoSendDone,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -68,6 +72,15 @@ export default function AgentChat({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-send a message when triggered from Tools panel
+  useEffect(() => {
+    if (autoSend && !streaming) {
+      sendMessage(autoSend);
+      onAutoSendDone?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSend]);
 
   const clearHistory = useCallback(async () => {
     setMessages([]);

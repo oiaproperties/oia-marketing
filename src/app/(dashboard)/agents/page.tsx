@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Search, PenTool, Share2, Shield, TrendingUp, ArrowRight } from "lucide-react";
+import { Search, PenTool, Share2, ArrowRight } from "lucide-react";
 
 const AGENTS = [
   {
@@ -8,40 +8,24 @@ const AGENTS = [
     name: "SEO Specialist",
     icon: Search,
     color: "#10B981",
-    description: "Keyword research, meta tags, content scoring, and competitor analysis for search engine optimisation.",
-    quickStat: "5 tools",
+    description: "Keyword research, meta tags, SERP preview, content scoring, site audit, rank tracking, and competitor gap analysis.",
+    quickStat: "9 tools",
   },
   {
     id: "content",
     name: "Content Creator",
     icon: PenTool,
     color: "#8B5CF6",
-    description: "Blog posts, social captions, ad copy, and hashtags — platform-aware with character limit enforcement.",
-    quickStat: "6 tools",
+    description: "Blog posts, social captions, ad copy, hashtags, email copy, and content briefs — platform-aware with full specs.",
+    quickStat: "8 tools",
   },
   {
     id: "social",
-    name: "Social Media Manager",
+    name: "Social Media",
     icon: Share2,
     color: "#3B82F6",
-    description: "Content calendars, scheduling, best posting times, and platform analytics across all major networks.",
-    quickStat: "6 tools",
-  },
-  {
-    id: "moderator",
-    name: "Moderator",
-    icon: Shield,
-    color: "#F59E0B",
-    description: "Comment moderation with toxicity scoring, brand voice checking, and crisis pattern detection.",
-    quickStat: "7 tools",
-  },
-  {
-    id: "media-buyer",
-    name: "Media Buyer",
-    icon: TrendingUp,
-    color: "#EF4444",
-    description: "Meta and Google Ads campaign creation with budget allocation and ROI analysis. Requires CONFIRM before execution.",
-    quickStat: "9 tools",
+    description: "Content calendars, campaign planning, engagement analytics, best posting times, and competitor monitoring.",
+    quickStat: "8 tools",
   },
 ];
 
@@ -51,7 +35,7 @@ export default function AgentsPage() {
       <div className="db-page-head">
         <div>
           <h1 className="db-page-title">Marketing Agents</h1>
-          <p className="db-page-sub">5 specialized Claude AI agents for every marketing task</p>
+          <p className="db-page-sub">3 specialized Claude AI agents — each with full dashboard, tools, tasks, kanban, calendar & todo</p>
         </div>
       </div>
 

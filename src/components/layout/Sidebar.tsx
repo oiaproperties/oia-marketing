@@ -30,12 +30,10 @@ const ADS_PLATFORMS = [
 ];
 
 const AGENT_NAV = [
-  { href: "/agents",              icon: LayoutGrid,  label: "All Agents" },
-  { href: "/agents/seo",          icon: Search,      label: "SEO Specialist" },
-  { href: "/agents/content",      icon: PenTool,     label: "Content Creator" },
-  { href: "/agents/social",       icon: Share2,      label: "Social Manager" },
-  { href: "/agents/moderator",    icon: Shield,      label: "Moderator" },
-  { href: "/agents/media-buyer",  icon: TrendingUp,  label: "Media Buyer" },
+  { href: "/agents",         icon: LayoutGrid, label: "All Agents" },
+  { href: "/agents/seo",     icon: Search,     label: "SEO Specialist" },
+  { href: "/agents/content", icon: PenTool,    label: "Content Creator" },
+  { href: "/agents/social",  icon: Share2,     label: "Social Media" },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -190,7 +188,7 @@ export default function Sidebar() {
               {isSocial && (
                 <Link href="/agents/social" className={`db-nav-link${pathname === "/agents/social" ? " active" : ""}`}>
                   <Share2 className="nav-icon" size={16} />
-                  Social Manager
+                  Social Media
                 </Link>
               )}
             </>
