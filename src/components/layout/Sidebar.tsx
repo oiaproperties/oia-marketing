@@ -18,8 +18,9 @@ import { FaLinkedinIn } from "react-icons/fa";
 type UserRole = "ADMIN" | "CONTENT_CREATOR" | "SEO_SPECIALIST" | "SOCIAL_MANAGER";
 
 const OIA_NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/setup",     icon: Settings,        label: "Setup & Credentials" },
+  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/setup",      icon: Settings,        label: "Setup & Credentials" },
+  { href: "/agents/seo", icon: Search,          label: "SEO Specialist" },
 ];
 
 const ADS_PLATFORMS: {
@@ -74,7 +75,6 @@ const ADS_PLATFORMS: {
 
 const AGENT_NAV = [
   { href: "/agents",         icon: LayoutGrid, label: "All Agents" },
-  { href: "/agents/seo",     icon: Search,     label: "SEO Specialist" },
   { href: "/agents/content", icon: PenTool,    label: "Content Creator" },
   { href: "/agents/social",  icon: Share2,     label: "Social Media" },
 ];
@@ -103,6 +103,7 @@ export default function Sidebar() {
 
   const [adsOpen, setAdsOpen] = useState(true);
   const [agentsOpen, setAgentsOpen] = useState(true);
+  const [expandedPlatform, setExpandedPlatform] = useState<string | null>("meta");
 
   function connDot(connected: boolean) {
     return (
@@ -147,12 +148,17 @@ export default function Sidebar() {
         {isAdmin && (
           <div>
             <div className="db-nav-label">OIA ADS</div>
-            {OIA_NAV.map(({ href, icon: Icon, label }) => (
-              <Link key={href} href={href} className={`db-nav-link${pathname === href ? " active" : ""}`}>
-                <Icon className="nav-icon" size={16} />
-                {label}
-              </Link>
-            ))}
+            {OIA_NAV.map(({ href, icon: Icon, label }) => {
+              const active = href === "/dashboard" || href === "/setup"
+                ? pathname === href
+                : pathname.startsWith(href);
+              return (
+                <Link key={href} href={href} className={`db-nav-link${active ? " active" : ""}`}>
+                  <Icon className="nav-icon" size={16} />
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         )}
 
@@ -177,52 +183,58 @@ export default function Sidebar() {
               <div>
                 {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
                   const connected = platformConnected[id];
-                  const isAnySubActive = sub.some(s => {
-                    if (id === "meta") return pathname.startsWith("/meta");
-                    if (id === "google") return pathname.startsWith("/google");
-                    return pathname === `/ads/${id}`;
-                  });
+                  const isAnySubActive = id === "meta"
+                    ? pathname.startsWith("/meta")
+                    : id === "google"
+                      ? pathname.startsWith("/google")
+                      : sub.some(s => pathname === s.href);
+                  const isExpanded = expandedPlatform === id;
 
                   return (
-                    <div key={id} style={{ marginBottom: 2 }}>
-                      {/* Platform group header */}
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: 6,
-                        padding: "5px 10px 3px",
-                        borderLeft: `2px solid ${color}`,
-                        marginLeft: 4, marginTop: 6, marginBottom: 1,
-                      }}>
-                        <Icon size={12} style={{ color, flexShrink: 0 }} />
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, color,
-                          textTransform: "uppercase", letterSpacing: "0.07em", flex: 1,
-                        }}>{label}</span>
+                    <div key={id}>
+                      {/* Platform row — looks like a db-nav-link with a chevron */}
+                      <button
+                        onClick={() => setExpandedPlatform(isExpanded ? null : id)}
+                        className={`db-nav-link${isAnySubActive ? " active" : ""}`}
+                        style={{
+                          width: "100%", background: "none", border: "none",
+                          cursor: "pointer", textAlign: "left",
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <Icon size={14} className="nav-icon" style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
                         {connDot(connected)}
-                      </div>
+                        {isExpanded
+                          ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
+                          : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
+                      </button>
 
                       {/* Sub-links */}
-                      <div style={{ paddingLeft: 16 }}>
-                        {sub.map((item, idx) => {
-                          const subActive = id === "meta"
-                            ? pathname.startsWith(item.href)
-                            : id === "google"
+                      {isExpanded && (
+                        <div style={{ paddingLeft: 20 }}>
+                          {sub.map((item, idx) => {
+                            const subActive = id === "meta"
                               ? pathname.startsWith(item.href)
-                              : pathname === item.href;
-                          const SubIcon = item.icon;
-                          return (
-                            <Link
-                              key={`${item.href}-${idx}`}
-                              href={item.href}
-                              className={`db-nav-link${subActive ? " active" : ""}`}
-                              style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                            >
-                              <SubIcon size={11} className="nav-icon"
-                                style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
-                              <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
+                              : id === "google"
+                                ? pathname.startsWith(item.href)
+                                : pathname === item.href;
+                            const SubIcon = item.icon;
+                            return (
+                              <Link
+                                key={`${item.href}-${idx}`}
+                                href={item.href}
+                                className={`db-nav-link${subActive ? " active" : ""}`}
+                                style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                              >
+                                <SubIcon size={11} className="nav-icon"
+                                  style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                                <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
