@@ -4,7 +4,7 @@ import { Search, PenTool } from "lucide-react";
 import AgentChat from "@/components/agents/AgentChat";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab = "Chat" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
+type Tab = "Dashboard" | "Chat" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
 type Priority = "High" | "Medium" | "Low";
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
 type EventType = "task" | "deadline" | "meeting" | "publish";
@@ -611,8 +611,172 @@ function ReportsPanel() {
   );
 }
 
+// ─── SEO Dashboard Panel ──────────────────────────────────────────────────────
+function SEODashboard({ onGoToTab }: { onGoToTab: (t: Tab) => void }) {
+  const [tasks] = useLocalState<Task[]>("oia_seo_tasks", DEMO_TASKS);
+  const openTasks = tasks.filter(t => t.status !== "done").length;
+  const doneTasks = tasks.filter(t => t.status === "done").length;
+
+  const kpis = [
+    { label: "Organic Traffic", value: "12,450", change: "+18%", icon: "📈", color: "#10B981" },
+    { label: "Keywords Top 10", value: "34", change: "+6 this month", icon: "🎯", color: "#3B82F6" },
+    { label: "Domain Authority", value: "DA 38", change: "Target: DA 40", icon: "🏆", color: "#8B5CF6" },
+    { label: "Page Speed (LCP)", value: "2.1s", change: "Good ✅", icon: "⚡", color: "#F59E0B" },
+  ];
+
+  const rankings = [
+    { keyword: "luxury apartments Dubai", pos: 4, vol: "8,100", change: "+2" },
+    { keyword: "buy property Dubai expats", pos: 7, vol: "5,400", change: "+4" },
+    { keyword: "Aldar Yas Acres review", pos: 2, vol: "2,900", change: "0" },
+    { keyword: "Dubai real estate investment", pos: 11, vol: "12,000", change: "-1" },
+    { keyword: "OIA properties Dubai", pos: 1, vol: "1,200", change: "0" },
+  ];
+
+  const auditIssues = [
+    { severity: "high", issue: "14 pages missing meta descriptions", action: "Fix meta tags" },
+    { severity: "medium", issue: "3 broken internal links detected", action: "Update links" },
+    { severity: "medium", issue: "Image alt tags missing on 8 pages", action: "Add alt text" },
+    { severity: "low", issue: "Sitemap not submitted to Bing", action: "Submit sitemap" },
+  ];
+
+  const SEV_COLORS: Record<string, string> = { high: "#EF4444", medium: "#F59E0B", low: "#10B981" };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {kpis.map(k => (
+          <div key={k.label} className="db-card" style={{ borderTop: `3px solid ${k.color}` }}>
+            <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+            <div style={{ fontWeight: 800, fontSize: 22, color: k.color }}>{k.value}</div>
+            <div style={{ fontSize: 12, color: "var(--text)", fontWeight: 600, marginTop: 2 }}>{k.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{k.change}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {/* Keyword Rankings */}
+        <div className="db-card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div className="db-card-title" style={{ margin: 0 }}>Keyword Rankings</div>
+            <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Tools")}>+ Research →</button>
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                {["Keyword","Pos","Volume","Δ"].map(h => <th key={h} style={{ textAlign: "left", padding: "4px 6px", color: "var(--text-muted)", fontWeight: 700, fontSize: 11 }}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {rankings.map(r => (
+                <tr key={r.keyword} style={{ borderBottom: "1px solid var(--border)" }}>
+                  <td style={{ padding: "7px 6px", color: "var(--text)", fontWeight: 500 }}>{r.keyword}</td>
+                  <td style={{ padding: "7px 6px" }}>
+                    <span style={{ fontWeight: 800, color: r.pos <= 3 ? "#10B981" : r.pos <= 10 ? "#F59E0B" : "#EF4444" }}>#{r.pos}</span>
+                  </td>
+                  <td style={{ padding: "7px 6px", color: "var(--text-muted)" }}>{r.vol}</td>
+                  <td style={{ padding: "7px 6px", color: r.change.startsWith("+") ? "#10B981" : r.change.startsWith("-") ? "#EF4444" : "var(--text-muted)", fontWeight: 700 }}>{r.change}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Site audit */}
+          <div className="db-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div className="db-card-title" style={{ margin: 0 }}>Site Audit Issues</div>
+              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Tools")}>Run audit →</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {auditIssues.map((a, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 7, background: SEV_COLORS[a.severity] + "10", border: `1px solid ${SEV_COLORS[a.severity]}30` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: SEV_COLORS[a.severity], flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 12, color: "var(--text)" }}>{a.issue}</span>
+                  <button className="btn-ghost" style={{ fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => onGoToTab("Chat")}>{a.action}</button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Task summary */}
+          <div className="db-card">
+            <div className="db-card-title">Task Overview</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              {[
+                { label: "Open", value: openTasks, color: "#F59E0B" },
+                { label: "Done", value: doneTasks, color: "#10B981" },
+                { label: "Total", value: tasks.length, color: "#3B82F6" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center", padding: "10px 6px", background: "var(--surface-2)", borderRadius: 8 }}>
+                  <div style={{ fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn-ghost" style={{ width: "100%", marginTop: 10, fontSize: 12 }} onClick={() => onGoToTab("Tasks")}>View all tasks →</button>
+          </div>
+        </div>
+      </div>
+
+      {/* SEO Health Metrics */}
+      <div className="db-card">
+        <div className="db-card-title">SEO Health Score</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
+          {[
+            { label: "On-Page SEO", score: 78 },
+            { label: "Technical SEO", score: 65 },
+            { label: "Backlinks", score: 42 },
+            { label: "Content Quality", score: 85 },
+            { label: "Core Web Vitals", score: 91 },
+          ].map(m => (
+            <div key={m.label} style={{ textAlign: "center" }}>
+              <div style={{ position: "relative", width: 60, height: 60, margin: "0 auto 8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="24" fill="none" stroke="var(--border)" strokeWidth="6" />
+                  <circle cx="30" cy="30" r="24" fill="none"
+                    stroke={m.score >= 80 ? "#10B981" : m.score >= 60 ? "#F59E0B" : "#EF4444"}
+                    strokeWidth="6" strokeLinecap="round"
+                    strokeDasharray={`${(m.score / 100) * 150.8} 150.8`}
+                    transform="rotate(-90 30 30)" />
+                </svg>
+                <span style={{ position: "absolute", fontWeight: 800, fontSize: 13, color: "var(--text)" }}>{m.score}</span>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>{m.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="db-card">
+        <div className="db-card-title">Quick Actions</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {[
+            { label: "🔎 Keyword Research", tab: "Tools" as Tab },
+            { label: "🏷️ Generate Meta Tags", tab: "Tools" as Tab },
+            { label: "📊 Content Analyser", tab: "Tools" as Tab },
+            { label: "📋 Add New Task", tab: "Tasks" as Tab },
+            { label: "📅 Schedule Audit", tab: "Calendar" as Tab },
+            { label: "💬 Ask SEO Agent", tab: "Chat" as Tab },
+          ].map(a => (
+            <button key={a.label} className="btn-ghost"
+              style={{ textAlign: "left", fontSize: 13, padding: "10px 14px", fontWeight: 500 }}
+              onClick={() => onGoToTab(a.tab)}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
-const TABS: Tab[] = ["Chat", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
+const TABS: Tab[] = ["Dashboard", "Chat", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
 const QUICK_ACTIONS = [
   "Research keywords for luxury real estate in Dubai",
   "Analyse oiaproperties.com homepage for SEO",
@@ -623,7 +787,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function SEOSpecialistPage() {
-  const [tab, setTab] = useState<Tab>("Chat");
+  const [tab, setTab] = useState<Tab>("Dashboard");
   const [autoSend, setAutoSend] = useState<string | undefined>();
 
   const handleSendToChat = (msg: string) => {
@@ -650,6 +814,7 @@ export default function SEOSpecialistPage() {
         ))}
       </div>
 
+      {tab === "Dashboard" && <SEODashboard onGoToTab={setTab} />}
       {tab === "Chat" && (
         <AgentChat
           agentId="seo"

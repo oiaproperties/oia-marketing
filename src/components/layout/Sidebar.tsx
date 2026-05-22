@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Settings, Moon, Sun,
   Bot, Search, PenTool, Share2, LayoutGrid,
   ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
-  BarChart2, Layers, Image, TrendingUp, Target, Zap, KeyRound,
+  BarChart2, Layers, ImageIcon, TrendingUp, Target, Zap, KeyRound,
 } from "lucide-react";
 import { SiGoogleads, SiMeta, SiSnapchat, SiTiktok } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa";
@@ -31,7 +31,7 @@ const ADS_PLATFORMS: {
     sub: [
       { href: "/meta/campaigns", label: "Campaigns",  icon: Layers },
       { href: "/meta/adsets",    label: "Ad Sets",    icon: Target },
-      { href: "/meta/ads",       label: "Ads",        icon: Image },
+      { href: "/meta/ads",       label: "Ads",        icon: ImageIcon },
       { href: "/meta/insights",  label: "Insights",   icon: BarChart2 },
     ],
   },
@@ -40,7 +40,7 @@ const ADS_PLATFORMS: {
     sub: [
       { href: "/google/campaigns",   label: "Campaigns",   icon: Layers },
       { href: "/google/adgroups",    label: "Ad Groups",   icon: Target },
-      { href: "/google/ads",         label: "Ads",         icon: Image },
+      { href: "/google/ads",         label: "Ads",         icon: ImageIcon },
       { href: "/google/keywords",    label: "Keywords",    icon: KeyRound },
       { href: "/google/performance", label: "Performance", icon: TrendingUp },
       { href: "/google/optimize",    label: "Optimize",    icon: Zap },
@@ -51,7 +51,7 @@ const ADS_PLATFORMS: {
     sub: [
       { href: "/ads/snapchat", label: "Campaigns", icon: Layers },
       { href: "/ads/snapchat", label: "Ad Sets",   icon: Target },
-      { href: "/ads/snapchat", label: "Ads",       icon: Image },
+      { href: "/ads/snapchat", label: "Ads",       icon: ImageIcon },
     ],
   },
   {
@@ -59,14 +59,14 @@ const ADS_PLATFORMS: {
     sub: [
       { href: "/ads/tiktok", label: "Campaigns", icon: Layers },
       { href: "/ads/tiktok", label: "Ad Groups", icon: Target },
-      { href: "/ads/tiktok", label: "Ads",       icon: Image },
+      { href: "/ads/tiktok", label: "Ads",       icon: ImageIcon },
     ],
   },
   {
     id: "linkedin", label: "LinkedIn Ads", icon: FaLinkedinIn, color: "#0A66C2",
     sub: [
       { href: "/ads/linkedin", label: "Campaigns",  icon: Layers },
-      { href: "/ads/linkedin", label: "Creatives",  icon: Image },
+      { href: "/ads/linkedin", label: "Creatives",  icon: ImageIcon },
       { href: "/ads/linkedin", label: "Analytics",  icon: BarChart2 },
     ],
   },
@@ -89,8 +89,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const ROLE_COLORS: Record<UserRole, string> = {
   ADMIN: "#B8860B",
   CONTENT_CREATOR: "#8B5CF6",
-  SEO_SPECIALIST: "#3B82F6",
-  SOCIAL_MANAGER: "#10B981",
+  SEO_SPECIALIST: "#10B981",
+  SOCIAL_MANAGER: "#3B82F6",
 };
 
 export default function Sidebar() {
@@ -103,19 +103,13 @@ export default function Sidebar() {
 
   const [adsOpen, setAdsOpen] = useState(true);
   const [agentsOpen, setAgentsOpen] = useState(true);
-  const [expandedPlatform, setExpandedPlatform] = useState<string | null>(null);
-
-  function togglePlatform(id: string) {
-    setExpandedPlatform(prev => prev === id ? null : id);
-  }
 
   function connDot(connected: boolean) {
     return (
       <span style={{
         width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-        background: connected ? "#10B981" : "var(--text-muted)",
-        opacity: connected ? 1 : 0.4,
-        marginLeft: "auto",
+        background: connected ? "#10B981" : "rgba(255,255,255,0.2)",
+        marginLeft: 4,
       }} />
     );
   }
@@ -148,6 +142,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="db-nav">
+
         {/* OIA ADS — admin only */}
         {isAdmin && (
           <div>
@@ -161,9 +156,10 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* ADS — admin only, collapsible */}
+        {/* ADS PLATFORMS — admin only, all platforms always visible when open */}
         {isAdmin && (
           <div>
+            {/* Section header toggle */}
             <button
               onClick={() => setAdsOpen(v => !v)}
               style={{
@@ -171,71 +167,67 @@ export default function Sidebar() {
                 background: "none", border: "none", cursor: "pointer", padding: 0,
               }}
             >
-              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0 }}>ADS</div>
+              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0 }}>ADS PLATFORMS</div>
               {adsOpen
                 ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-              }
+                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
             </button>
 
-            {adsOpen && ADS_PLATFORMS.map(({ id, label, icon: Icon, color, textDark, sub }) => {
-              const platformHref = `/ads/${id}`;
-              const isActive = pathname.startsWith(platformHref) || sub.some(s => pathname.startsWith(s.href) && s.href !== `/ads/${id}`);
-              const connected = platformConnected[id];
-              const isExpanded = expandedPlatform === id;
+            {adsOpen && (
+              <div>
+                {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
+                  const connected = platformConnected[id];
+                  const isAnySubActive = sub.some(s => {
+                    if (id === "meta") return pathname.startsWith("/meta");
+                    if (id === "google") return pathname.startsWith("/google");
+                    return pathname === `/ads/${id}`;
+                  });
 
-              return (
-                <div key={id}>
-                  {/* Platform row — click to expand/collapse sub-links */}
-                  <button
-                    onClick={() => togglePlatform(id)}
-                    className={`db-nav-link${isActive ? " active" : ""}`}
-                    style={{
-                      width: "100%", display: "flex", alignItems: "center",
-                      background: "none", border: "none", cursor: "pointer", padding: 0,
-                      textAlign: "left",
-                    }}
-                  >
-                    <Icon
-                      className="nav-icon"
-                      size={15}
-                      style={{ color: isActive ? color : undefined, flexShrink: 0 }}
-                    />
-                    <span style={{ flex: 1, fontSize: 13 }}>{label}</span>
-                    {connDot(connected)}
-                    {isExpanded
-                      ? <ChevronDown size={10} style={{ color: "rgba(255,255,255,0.35)", marginLeft: 4, flexShrink: 0 }} />
-                      : <ChevronRight size={10} style={{ color: "rgba(255,255,255,0.25)", marginLeft: 4, flexShrink: 0 }} />
-                    }
-                  </button>
+                  return (
+                    <div key={id} style={{ marginBottom: 2 }}>
+                      {/* Platform group header */}
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "5px 10px 3px",
+                        borderLeft: `2px solid ${color}`,
+                        marginLeft: 4, marginTop: 6, marginBottom: 1,
+                      }}>
+                        <Icon size={12} style={{ color, flexShrink: 0 }} />
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color,
+                          textTransform: "uppercase", letterSpacing: "0.07em", flex: 1,
+                        }}>{label}</span>
+                        {connDot(connected)}
+                      </div>
 
-                  {/* Sub-links */}
-                  {isExpanded && (
-                    <div style={{ paddingLeft: 12, marginBottom: 2 }}>
-                      {sub.map((item, idx) => {
-                        const subActive = pathname === item.href || (item.href !== `/ads/${id}` && pathname.startsWith(item.href));
-                        const SubIcon = item.icon;
-                        return (
-                          <Link
-                            key={`${item.href}-${idx}`}
-                            href={item.href}
-                            className={`db-nav-link${subActive ? " active" : ""}`}
-                            style={{ fontSize: 12, paddingTop: 5, paddingBottom: 5, opacity: subActive ? 1 : 0.8 }}
-                          >
-                            <SubIcon
-                              size={12}
-                              className="nav-icon"
-                              style={{ color: subActive ? color : undefined, flexShrink: 0 }}
-                            />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
+                      {/* Sub-links */}
+                      <div style={{ paddingLeft: 16 }}>
+                        {sub.map((item, idx) => {
+                          const subActive = id === "meta"
+                            ? pathname.startsWith(item.href)
+                            : id === "google"
+                              ? pathname.startsWith(item.href)
+                              : pathname === item.href;
+                          const SubIcon = item.icon;
+                          return (
+                            <Link
+                              key={`${item.href}-${idx}`}
+                              href={item.href}
+                              className={`db-nav-link${subActive ? " active" : ""}`}
+                              style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                            >
+                              <SubIcon size={11} className="nav-icon"
+                                style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                              <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -252,34 +244,36 @@ export default function Sidebar() {
               <div className="db-nav-label" style={{ flex: 1, marginBottom: 0 }}>MARKETING AGENTS</div>
               {agentsOpen
                 ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-              }
+                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
             </button>
           )}
           {!isAdmin && <div className="db-nav-label">MY WORKSPACE</div>}
 
           {(isAdmin ? agentsOpen : true) && (
             <>
-              {isAdmin && AGENT_NAV.map(({ href, icon: Icon, label }) => (
-                <Link key={href} href={href} className={`db-nav-link${pathname === href ? " active" : ""}`}>
-                  <Icon className="nav-icon" size={16} />
-                  {label}
-                </Link>
-              ))}
+              {isAdmin && AGENT_NAV.map(({ href, icon: Icon, label }) => {
+                const active = pathname === href || (href !== "/agents" && pathname.startsWith(href));
+                return (
+                  <Link key={href} href={href} className={`db-nav-link${active ? " active" : ""}`}>
+                    <Icon className="nav-icon" size={16} />
+                    {label}
+                  </Link>
+                );
+              })}
               {isContent && (
-                <Link href="/agents/content" className={`db-nav-link${pathname === "/agents/content" ? " active" : ""}`}>
+                <Link href="/agents/content" className={`db-nav-link${pathname.startsWith("/agents/content") ? " active" : ""}`}>
                   <PenTool className="nav-icon" size={16} />
                   Content Creator
                 </Link>
               )}
               {isSeo && (
-                <Link href="/agents/seo" className={`db-nav-link${pathname === "/agents/seo" ? " active" : ""}`}>
+                <Link href="/agents/seo" className={`db-nav-link${pathname.startsWith("/agents/seo") ? " active" : ""}`}>
                   <Search className="nav-icon" size={16} />
                   SEO Specialist
                 </Link>
               )}
               {isSocial && (
-                <Link href="/agents/social" className={`db-nav-link${pathname === "/agents/social" ? " active" : ""}`}>
+                <Link href="/agents/social" className={`db-nav-link${pathname.startsWith("/agents/social") ? " active" : ""}`}>
                   <Share2 className="nav-icon" size={16} />
                   Social Media
                 </Link>
@@ -297,7 +291,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* TASKS — all roles */}
+        {/* TASKS */}
         <div>
           <div className="db-nav-label">TASKS</div>
           <Link href="/tasks" className={`db-nav-link${pathname === "/tasks" ? " active" : ""}`}>
@@ -306,7 +300,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* TEAM — admin only */}
+        {/* ADMIN */}
         {isAdmin && (
           <div>
             <div className="db-nav-label">ADMIN</div>
@@ -319,7 +313,6 @@ export default function Sidebar() {
       </nav>
 
       <div className="db-sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {/* User info */}
         {session?.user && (
           <div style={{
             display: "flex", alignItems: "center", gap: 8, padding: "8px 0",
@@ -337,17 +330,12 @@ export default function Sidebar() {
               <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {session.user.name || session.user.email}
               </div>
-              <div style={{
-                fontSize: 10, color: ROLE_COLORS[role], fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em",
-              }}>
+              <div style={{ fontSize: 10, color: ROLE_COLORS[role], fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {ROLE_LABELS[role]}
               </div>
             </div>
-            <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              title="Sign out"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "rgba(255,255,255,0.4)" }}
-            >
+            <button onClick={() => signOut({ callbackUrl: "/login" })} title="Sign out"
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "rgba(255,255,255,0.4)" }}>
               <LogOut size={13} />
             </button>
           </div>

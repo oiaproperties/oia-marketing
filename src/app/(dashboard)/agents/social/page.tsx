@@ -8,7 +8,7 @@ import { FaLinkedinIn } from "react-icons/fa";
 import AgentChat from "@/components/agents/AgentChat";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
-type MainTab = "Chat" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
+type MainTab = "Dashboard" | "Chat" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
 type PlatformTab = "General" | "Instagram" | "Facebook" | "LinkedIn" | "TikTok" | "Snapchat";
 type Priority = "High" | "Medium" | "Low";
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
@@ -828,8 +828,156 @@ function ReportsPanel() {
   );
 }
 
+// ─── Social Dashboard Panel ───────────────────────────────────────────────────
+function SocialDashboard({ onGoToTab }: { onGoToTab: (t: MainTab) => void }) {
+  const [tasks] = useLocalState<Task[]>("oia_social_tasks", DEMO_TASKS);
+  const openTasks = tasks.filter(t => t.status !== "done").length;
+  const doneTasks = tasks.filter(t => t.status === "done").length;
+
+  const kpis = [
+    { label: "Total Followers", value: "24.5K", change: "+3.2% this month", icon: "👥", color: COLOR },
+    { label: "Avg Engagement", value: "4.8%", change: "Above benchmark ✅", icon: "❤️", color: "#10B981" },
+    { label: "Scheduled Posts", value: "12", change: "Next 7 days", icon: "📅", color: "#8B5CF6" },
+    { label: "Active Campaigns", value: "2", change: "Instagram + LinkedIn", icon: "🚀", color: "#F59E0B" },
+  ];
+
+  const platformStats = [
+    { platform: "Instagram", followers: "15,200", growth: "+3.2%", engagement: "5.1%", color: "#E1306C", icon: "📸" },
+    { platform: "LinkedIn",  followers: "5,800",  growth: "+1.8%", engagement: "2.8%", color: "#0A66C2", icon: "💼" },
+    { platform: "Facebook",  followers: "2,100",  growth: "+0.5%", engagement: "1.9%", color: "#1877F2", icon: "👥" },
+    { platform: "TikTok",    followers: "1,400",  growth: "New",   engagement: "8.2%", color: "#EE1D52", icon: "🎵" },
+  ];
+
+  const upcomingPosts = [
+    { title: "OIA Yas Acres — aerial property tour", platform: "Instagram", date: "Today 8PM" },
+    { title: "Why HNW investors choose Dubai over Singapore", platform: "LinkedIn", date: "Tomorrow 9AM" },
+    { title: "Weekend open day announcement", platform: "Facebook", date: "Fri 10AM" },
+    { title: "Dubai skyline property reel", platform: "TikTok", date: "Sat 7PM" },
+  ];
+
+  const PLAT_COLORS: Record<string, string> = { Instagram: "#E1306C", LinkedIn: "#0A66C2", Facebook: "#1877F2", TikTok: "#EE1D52" };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* KPI cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {kpis.map(k => (
+          <div key={k.label} className="db-card" style={{ borderTop: `3px solid ${k.color}` }}>
+            <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+            <div style={{ fontWeight: 800, fontSize: 22, color: k.color }}>{k.value}</div>
+            <div style={{ fontSize: 12, color: "var(--text)", fontWeight: 600, marginTop: 2 }}>{k.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{k.change}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {/* Platform breakdown */}
+        <div className="db-card">
+          <div className="db-card-title">Platform Overview</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {platformStats.map(p => (
+              <div key={p.platform} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", background: p.color + "10", borderRadius: 8, border: `1px solid ${p.color}25` }}>
+                <span style={{ fontSize: 20 }}>{p.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: p.color }}>{p.platform}</span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{p.followers} followers</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, fontSize: 11 }}>
+                    <span style={{ color: "#10B981", fontWeight: 600 }}>↑ {p.growth}</span>
+                    <span style={{ color: "var(--text-muted)" }}>Engagement: <b style={{ color: p.color }}>{p.engagement}</b></span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Upcoming posts */}
+          <div className="db-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div className="db-card-title" style={{ margin: 0 }}>Upcoming Posts</div>
+              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Calendar")}>Calendar →</button>
+            </div>
+            {upcomingPosts.map((p, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--border)" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: PLAT_COLORS[p.platform] ?? COLOR, flexShrink: 0, marginTop: 4 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", lineHeight: 1.3 }}>{p.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{p.platform} · {p.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Task summary */}
+          <div className="db-card">
+            <div className="db-card-title">Task Overview</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              {[
+                { label: "Open", value: openTasks, color: "#F59E0B" },
+                { label: "Done", value: doneTasks, color: "#10B981" },
+                { label: "Total", value: tasks.length, color: COLOR },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center", padding: "10px 6px", background: "var(--surface-2)", borderRadius: 8 }}>
+                  <div style={{ fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn-ghost" style={{ width: "100%", marginTop: 10, fontSize: 12 }} onClick={() => onGoToTab("Tasks")}>View all tasks →</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Engagement rate bars */}
+      <div className="db-card">
+        <div className="db-card-title">Engagement Rate by Platform</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          {platformStats.map(p => (
+            <div key={p.platform}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+                <span style={{ fontWeight: 600, color: p.color }}>{p.platform}</span>
+                <span style={{ fontWeight: 700 }}>{p.engagement}</span>
+              </div>
+              <div style={{ height: 8, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ height: "100%", background: p.color, width: `${Math.min(100, parseFloat(p.engagement) * 12)}%`, borderRadius: 99 }} />
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>Benchmark: 3.5%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="db-card">
+        <div className="db-card-title">Quick Actions</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {[
+            { label: "📅 Build Content Calendar", tab: "Tools" as MainTab },
+            { label: "🚀 Plan Campaign", tab: "Tools" as MainTab },
+            { label: "📊 Engagement Calculator", tab: "Tools" as MainTab },
+            { label: "📋 Add New Task", tab: "Tasks" as MainTab },
+            { label: "🗓️ Add to Calendar", tab: "Calendar" as MainTab },
+            { label: "💬 Ask Social Agent", tab: "Chat" as MainTab },
+          ].map(a => (
+            <button key={a.label} className="btn-ghost"
+              style={{ textAlign: "left", fontSize: 13, padding: "10px 14px", fontWeight: 500 }}
+              onClick={() => onGoToTab(a.tab)}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
-const MAIN_TABS: MainTab[] = ["Chat", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
+const MAIN_TABS: MainTab[] = ["Dashboard", "Chat", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
 
 const TAB_ICONS: Partial<Record<MainTab, React.ReactNode>> = {
   Chat: <Share2 size={13} />,
@@ -837,7 +985,7 @@ const TAB_ICONS: Partial<Record<MainTab, React.ReactNode>> = {
 };
 
 export default function SocialMediaPage() {
-  const [tab, setTab] = useState<MainTab>("Chat");
+  const [tab, setTab] = useState<MainTab>("Dashboard");
   const [autoSend, setAutoSend] = useState<string | undefined>();
 
   const handleSendToChat = (msg: string) => { setAutoSend(msg); setTab("Chat"); };
@@ -860,6 +1008,7 @@ export default function SocialMediaPage() {
         ))}
       </div>
 
+      {tab === "Dashboard" && <SocialDashboard onGoToTab={setTab} />}
       {tab === "Chat" && (
         <>
           <AgentChat

@@ -9,7 +9,7 @@ import {
 import AgentChat from "@/components/agents/AgentChat";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
-type Tab = "Chat" | "Articles" | "New Ideas" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
+type Tab = "Dashboard" | "Chat" | "Articles" | "New Ideas" | "Tools" | "Tasks" | "Kanban" | "Calendar" | "Todo" | "Reports";
 type Priority = "High" | "Medium" | "Low";
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
 type EventType = "task" | "deadline" | "meeting" | "publish";
@@ -859,8 +859,155 @@ function IdeasPanel({ onSwitchTab }: { onSwitchTab: (tab: Tab) => void }) {
   );
 }
 
+// ─── Content Dashboard Panel ──────────────────────────────────────────────────
+function ContentDashboard({ onGoToTab }: { onGoToTab: (t: Tab) => void }) {
+  const [tasks] = useLocalState<Task[]>("oia_content_tasks", DEMO_TASKS);
+  const openTasks = tasks.filter(t => t.status !== "done").length;
+  const doneTasks = tasks.filter(t => t.status === "done").length;
+
+  const kpis = [
+    { label: "Articles Published", value: "8", change: "This month", icon: "📝", color: COLOR },
+    { label: "Active Ideas", value: "6", change: "In pipeline", icon: "💡", color: "#F59E0B" },
+    { label: "Avg Word Count", value: "1,680", change: "Target: 1,500+", icon: "📊", color: "#10B981" },
+    { label: "Platforms Active", value: "5", change: "IG · FB · LI · TT · SC", icon: "📱", color: "#3B82F6" },
+  ];
+
+  const recentContent = [
+    { title: "Why OIA Dubai is the #1 Choice for Luxury Real Estate", platform: "Blog", date: "May 20", status: "Published" },
+    { title: "Aldar Yas Acres: Complete Guide for UAE Expat Buyers", platform: "Blog", date: "May 15", status: "Published" },
+    { title: "5 Instagram captions — Yas Acres launch", platform: "Instagram", date: "May 18", status: "Draft" },
+    { title: "Q3 Email Newsletter — Dubai Market Update", platform: "Email", date: "May 25", status: "Scheduled" },
+  ];
+
+  const platformPerf = [
+    { platform: "Blog", posts: 8, engagement: "4.2%", color: COLOR },
+    { platform: "Instagram", posts: 24, engagement: "5.1%", color: "#E1306C" },
+    { platform: "LinkedIn", posts: 10, engagement: "2.8%", color: "#0A66C2" },
+    { platform: "Facebook", posts: 16, engagement: "1.9%", color: "#1877F2" },
+  ];
+
+  const STATUS_COLORS: Record<string, string> = { Published: "#10B981", Draft: "#F59E0B", Scheduled: "#3B82F6" };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* KPI cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        {kpis.map(k => (
+          <div key={k.label} className="db-card" style={{ borderTop: `3px solid ${k.color}` }}>
+            <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+            <div style={{ fontWeight: 800, fontSize: 22, color: k.color }}>{k.value}</div>
+            <div style={{ fontSize: 12, color: "var(--text)", fontWeight: 600, marginTop: 2 }}>{k.label}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{k.change}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {/* Recent content */}
+        <div className="db-card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div className="db-card-title" style={{ margin: 0 }}>Recent Content</div>
+            <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Articles")}>All articles →</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {recentContent.map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 3, lineHeight: 1.3 }}>{c.title}</div>
+                  <div style={{ display: "flex", gap: 8, fontSize: 11, color: "var(--text-muted)" }}>
+                    <span>{c.platform}</span><span>·</span><span>{c.date}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, color: STATUS_COLORS[c.status], background: STATUS_COLORS[c.status] + "20", flexShrink: 0 }}>{c.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Platform performance */}
+          <div className="db-card">
+            <div className="db-card-title">Platform Performance</div>
+            {platformPerf.map(p => (
+              <div key={p.platform} style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ color: "var(--text)", fontWeight: 600 }}>{p.platform}</span>
+                  <span style={{ color: "var(--text-muted)" }}>{p.posts} posts · <span style={{ color: p.color, fontWeight: 700 }}>{p.engagement}</span></span>
+                </div>
+                <div style={{ height: 5, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ height: "100%", background: p.color, width: `${Math.min(100, parseFloat(p.engagement) * 15)}%`, borderRadius: 99 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Task summary */}
+          <div className="db-card">
+            <div className="db-card-title">Task Overview</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              {[
+                { label: "Open", value: openTasks, color: "#F59E0B" },
+                { label: "Done", value: doneTasks, color: "#10B981" },
+                { label: "Total", value: tasks.length, color: COLOR },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center", padding: "10px 6px", background: "var(--surface-2)", borderRadius: 8 }}>
+                  <div style={{ fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn-ghost" style={{ width: "100%", marginTop: 10, fontSize: 12 }} onClick={() => onGoToTab("Tasks")}>View all tasks →</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content pipeline */}
+      <div className="db-card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="db-card-title" style={{ margin: 0 }}>Content Pipeline</div>
+          <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("New Ideas")}>All ideas →</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {["Blog","Social","Campaign","Video"].map((cat, i) => {
+            const counts = [3, 2, 1, 2];
+            return (
+              <div key={cat} style={{ textAlign: "center", padding: "14px 10px", background: CATEGORY_COLORS[cat] + "15", borderRadius: 10, border: `1px solid ${CATEGORY_COLORS[cat]}30` }}>
+                <div style={{ fontWeight: 800, fontSize: 24, color: CATEGORY_COLORS[cat] }}>{counts[i]}</div>
+                <div style={{ fontSize: 12, color: "var(--text)", fontWeight: 600, marginTop: 4 }}>{cat}</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>ideas</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="db-card">
+        <div className="db-card-title">Quick Actions</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {[
+            { label: "📝 Write Blog Post", tab: "Tools" as Tab },
+            { label: "📸 Generate Captions", tab: "Tools" as Tab },
+            { label: "📣 Create Ad Copy", tab: "Tools" as Tab },
+            { label: "📋 Add New Task", tab: "Tasks" as Tab },
+            { label: "📅 Schedule Content", tab: "Calendar" as Tab },
+            { label: "💬 Ask Content Agent", tab: "Chat" as Tab },
+          ].map(a => (
+            <button key={a.label} className="btn-ghost"
+              style={{ textAlign: "left", fontSize: 13, padding: "10px 14px", fontWeight: 500 }}
+              onClick={() => onGoToTab(a.tab)}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
-const ALL_TABS: Tab[] = ["Chat", "Articles", "New Ideas", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
+const ALL_TABS: Tab[] = ["Dashboard", "Chat", "Articles", "New Ideas", "Tools", "Tasks", "Kanban", "Calendar", "Todo", "Reports"];
 
 const TAB_ICONS: Partial<Record<Tab, React.ReactNode>> = {
   Chat: <PenTool size={13} />,
@@ -870,7 +1017,7 @@ const TAB_ICONS: Partial<Record<Tab, React.ReactNode>> = {
 };
 
 export default function ContentCreatorPage() {
-  const [tab, setTab] = useState<Tab>("Chat");
+  const [tab, setTab] = useState<Tab>("Dashboard");
   const [autoSend, setAutoSend] = useState<string | undefined>();
 
   const handleSendToChat = (msg: string) => { setAutoSend(msg); setTab("Chat"); };
@@ -893,6 +1040,7 @@ export default function ContentCreatorPage() {
         ))}
       </div>
 
+      {tab === "Dashboard" && <ContentDashboard onGoToTab={setTab} />}
       {tab === "Chat" && (
         <AgentChat
           agentId="content"
