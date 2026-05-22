@@ -8,8 +8,9 @@ import { useCredentialsStore } from "@/store/credentialsStore";
 import { useAdsAccountStore } from "@/store/adsAccountStore";
 import {
   LayoutDashboard, Settings, Moon, Sun,
-  Bot, Search, PenTool, Share2, Shield, LayoutGrid,
-  TrendingUp, ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
+  Bot, Search, PenTool, Share2, LayoutGrid,
+  ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
+  BarChart2, Layers, Image, TrendingUp, Target, Zap, KeyRound,
 } from "lucide-react";
 import { SiGoogleads, SiMeta, SiSnapchat, SiTiktok } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa";
@@ -21,12 +22,54 @@ const OIA_NAV = [
   { href: "/setup",     icon: Settings,        label: "Setup & Credentials" },
 ];
 
-const ADS_PLATFORMS = [
-  { id: "meta",     label: "Meta Ads",      icon: SiMeta,       color: "#1877F2" },
-  { id: "google",   label: "Google Ads",    icon: SiGoogleads,  color: "#4285F4" },
-  { id: "snapchat", label: "Snapchat Ads",  icon: SiSnapchat,   color: "#FFFC00" },
-  { id: "tiktok",   label: "TikTok Ads",    icon: SiTiktok,     color: "#EE1D52" },
-  { id: "linkedin", label: "LinkedIn Ads",  icon: FaLinkedinIn, color: "#0A66C2" },
+const ADS_PLATFORMS: {
+  id: string; label: string; icon: React.ElementType; color: string; textDark?: boolean;
+  sub: { href: string; label: string; icon: React.ElementType }[];
+}[] = [
+  {
+    id: "meta", label: "Meta Ads", icon: SiMeta, color: "#1877F2",
+    sub: [
+      { href: "/meta/campaigns", label: "Campaigns",  icon: Layers },
+      { href: "/meta/adsets",    label: "Ad Sets",    icon: Target },
+      { href: "/meta/ads",       label: "Ads",        icon: Image },
+      { href: "/meta/insights",  label: "Insights",   icon: BarChart2 },
+    ],
+  },
+  {
+    id: "google", label: "Google Ads", icon: SiGoogleads, color: "#4285F4",
+    sub: [
+      { href: "/google/campaigns",   label: "Campaigns",   icon: Layers },
+      { href: "/google/adgroups",    label: "Ad Groups",   icon: Target },
+      { href: "/google/ads",         label: "Ads",         icon: Image },
+      { href: "/google/keywords",    label: "Keywords",    icon: KeyRound },
+      { href: "/google/performance", label: "Performance", icon: TrendingUp },
+      { href: "/google/optimize",    label: "Optimize",    icon: Zap },
+    ],
+  },
+  {
+    id: "snapchat", label: "Snapchat Ads", icon: SiSnapchat, color: "#FFFC00", textDark: true,
+    sub: [
+      { href: "/ads/snapchat", label: "Campaigns", icon: Layers },
+      { href: "/ads/snapchat", label: "Ad Sets",   icon: Target },
+      { href: "/ads/snapchat", label: "Ads",       icon: Image },
+    ],
+  },
+  {
+    id: "tiktok", label: "TikTok Ads", icon: SiTiktok, color: "#EE1D52",
+    sub: [
+      { href: "/ads/tiktok", label: "Campaigns", icon: Layers },
+      { href: "/ads/tiktok", label: "Ad Groups", icon: Target },
+      { href: "/ads/tiktok", label: "Ads",       icon: Image },
+    ],
+  },
+  {
+    id: "linkedin", label: "LinkedIn Ads", icon: FaLinkedinIn, color: "#0A66C2",
+    sub: [
+      { href: "/ads/linkedin", label: "Campaigns",  icon: Layers },
+      { href: "/ads/linkedin", label: "Creatives",  icon: Image },
+      { href: "/ads/linkedin", label: "Analytics",  icon: BarChart2 },
+    ],
+  },
 ];
 
 const AGENT_NAV = [
@@ -60,6 +103,11 @@ export default function Sidebar() {
 
   const [adsOpen, setAdsOpen] = useState(true);
   const [agentsOpen, setAgentsOpen] = useState(true);
+  const [expandedPlatform, setExpandedPlatform] = useState<string | null>(null);
+
+  function togglePlatform(id: string) {
+    setExpandedPlatform(prev => prev === id ? null : id);
+  }
 
   function connDot(connected: boolean) {
     return (
@@ -130,17 +178,62 @@ export default function Sidebar() {
               }
             </button>
 
-            {adsOpen && ADS_PLATFORMS.map(({ id, label, icon: Icon, color }) => {
-              const href = `/ads/${id}`;
-              const active = pathname.startsWith(href);
+            {adsOpen && ADS_PLATFORMS.map(({ id, label, icon: Icon, color, textDark, sub }) => {
+              const platformHref = `/ads/${id}`;
+              const isActive = pathname.startsWith(platformHref) || sub.some(s => pathname.startsWith(s.href) && s.href !== `/ads/${id}`);
               const connected = platformConnected[id];
+              const isExpanded = expandedPlatform === id;
+
               return (
-                <Link key={id} href={href} className={`db-nav-link${active ? " active" : ""}`}
-                  style={{ display: "flex", alignItems: "center" }}>
-                  <Icon className="nav-icon" size={16} style={{ color: active ? color : undefined }} />
-                  <span style={{ flex: 1 }}>{label}</span>
-                  {connDot(connected)}
-                </Link>
+                <div key={id}>
+                  {/* Platform row — click to expand/collapse sub-links */}
+                  <button
+                    onClick={() => togglePlatform(id)}
+                    className={`db-nav-link${isActive ? " active" : ""}`}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center",
+                      background: "none", border: "none", cursor: "pointer", padding: 0,
+                      textAlign: "left",
+                    }}
+                  >
+                    <Icon
+                      className="nav-icon"
+                      size={15}
+                      style={{ color: isActive ? color : undefined, flexShrink: 0 }}
+                    />
+                    <span style={{ flex: 1, fontSize: 13 }}>{label}</span>
+                    {connDot(connected)}
+                    {isExpanded
+                      ? <ChevronDown size={10} style={{ color: "rgba(255,255,255,0.35)", marginLeft: 4, flexShrink: 0 }} />
+                      : <ChevronRight size={10} style={{ color: "rgba(255,255,255,0.25)", marginLeft: 4, flexShrink: 0 }} />
+                    }
+                  </button>
+
+                  {/* Sub-links */}
+                  {isExpanded && (
+                    <div style={{ paddingLeft: 12, marginBottom: 2 }}>
+                      {sub.map((item, idx) => {
+                        const subActive = pathname === item.href || (item.href !== `/ads/${id}` && pathname.startsWith(item.href));
+                        const SubIcon = item.icon;
+                        return (
+                          <Link
+                            key={`${item.href}-${idx}`}
+                            href={item.href}
+                            className={`db-nav-link${subActive ? " active" : ""}`}
+                            style={{ fontSize: 12, paddingTop: 5, paddingBottom: 5, opacity: subActive ? 1 : 0.8 }}
+                          >
+                            <SubIcon
+                              size={12}
+                              className="nav-icon"
+                              style={{ color: subActive ? color : undefined, flexShrink: 0 }}
+                            />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
