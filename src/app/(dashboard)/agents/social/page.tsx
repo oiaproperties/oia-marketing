@@ -833,32 +833,117 @@ function SocialDashboard({ onGoToTab }: { onGoToTab: (t: MainTab) => void }) {
   const [tasks] = useLocalState<Task[]>("oia_social_tasks", DEMO_TASKS);
   const openTasks = tasks.filter(t => t.status !== "done").length;
   const doneTasks = tasks.filter(t => t.status === "done").length;
+  const [auditTab, setAuditTab] = useState<"strengths" | "weaknesses" | "strategy">("strengths");
 
   const kpis = [
     { label: "Total Followers", value: "24.5K", change: "+3.2% this month", icon: "👥", color: COLOR },
-    { label: "Avg Engagement", value: "4.8%", change: "Above benchmark ✅", icon: "❤️", color: "#10B981" },
+    { label: "Avg Engagement", value: "4.8%", change: "Above 3.5% benchmark ✅", icon: "❤️", color: "#10B981" },
     { label: "Scheduled Posts", value: "12", change: "Next 7 days", icon: "📅", color: "#8B5CF6" },
-    { label: "Active Campaigns", value: "2", change: "Instagram + LinkedIn", icon: "🚀", color: "#F59E0B" },
+    { label: "Organic Reach", value: "18.2K", change: "+8.1% vs last month", icon: "📡", color: "#F59E0B" },
   ];
 
-  const platformStats = [
-    { platform: "Instagram", followers: "15,200", growth: "+3.2%", engagement: "5.1%", color: "#E1306C", icon: "📸" },
-    { platform: "LinkedIn",  followers: "5,800",  growth: "+1.8%", engagement: "2.8%", color: "#0A66C2", icon: "💼" },
-    { platform: "Facebook",  followers: "2,100",  growth: "+0.5%", engagement: "1.9%", color: "#1877F2", icon: "👥" },
-    { platform: "TikTok",    followers: "1,400",  growth: "New",   engagement: "8.2%", color: "#EE1D52", icon: "🎵" },
+  const accounts = [
+    { platform: "Instagram",  handle: "@oiaproperties",   followers: "15,200", growth: "+3.2%", engagement: "5.1%",  posts: 284, status: "active",   color: "#E1306C", icon: "📸", target: "50K", priority: "🔥 Top" },
+    { platform: "Facebook",   handle: "OIA Properties",   followers: "2,100",  growth: "+0.5%", engagement: "1.9%",  posts: 156, status: "weak",     color: "#1877F2", icon: "👥", target: "10K", priority: "⚠️ Needs Work" },
+    { platform: "LinkedIn",   handle: "OIA Properties",   followers: "5,800",  growth: "+1.8%", engagement: "2.8%",  posts: 98,  status: "active",   color: "#0A66C2", icon: "💼", target: "15K", priority: "📈 Growing" },
+    { platform: "TikTok",     handle: "@oiaproperties",   followers: "1,400",  growth: "+12%",  engagement: "8.2%",  posts: 34,  status: "growing",  color: "#EE1D52", icon: "🎵", target: "25K", priority: "🚀 Potential" },
+    { platform: "Snapchat",   handle: "@oiaprops",        followers: "320",    growth: "New",   engagement: "3.1%",  posts: 18,  status: "new",      color: "#FFFC00", icon: "👻", target: "5K",  priority: "🆕 New" },
+    { platform: "YouTube",    handle: "OIA Properties",   followers: "—",      growth: "—",     engagement: "—",     posts: 0,   status: "missing",  color: "#FF0000", icon: "📹", target: "10K", priority: "❌ Missing" },
+    { platform: "Twitter/X",  handle: "@oiaproperties",   followers: "890",    growth: "+0.2%", engagement: "0.9%",  posts: 67,  status: "inactive", color: "#000000", icon: "🐦", target: "5K",  priority: "💤 Inactive" },
+  ];
+
+  const strengths = [
+    { icon: "📸", title: "Strong Instagram presence", detail: "15.2K followers with 5.1% engagement — well above the 3.5% real estate benchmark. Visual content resonates well." },
+    { icon: "💼", title: "Professional LinkedIn positioning", detail: "5.8K followers among HNW executives and investors — the right audience for high-ticket real estate conversions." },
+    { icon: "🎵", title: "TikTok showing explosive potential", detail: "8.2% engagement rate is best-in-class. Short-form video content for property tours is gaining traction fast." },
+    { icon: "🏠", title: "Premium visual content assets", detail: "Architectural renders, aerial footage, and luxury lifestyle photography — content quality is above competitors." },
+    { icon: "🌍", title: "Multilingual market reach", detail: "UAE audience is diverse — OIA has content opportunities in English, Arabic, Russian, Chinese, and Hindi." },
+    { icon: "📊", title: "Engaged community responding to launches", detail: "Project launch posts receive 2–3× higher engagement — the audience is primed for new announcements." },
+  ];
+
+  const weaknesses = [
+    { icon: "📅", severity: "High", title: "Inconsistent posting schedule", detail: "Irregular publishing frequency causes algorithm penalties. Instagram posts should be 5×/week minimum." },
+    { icon: "👥", severity: "High", title: "Facebook severely underperforming", detail: "Only 2,100 followers with 1.9% engagement. Facebook still drives the most real estate leads in UAE — this is a critical gap." },
+    { icon: "📹", severity: "High", title: "YouTube completely missing", detail: "Property tours, market insights, and virtual walkthroughs on YouTube is a massive untapped channel for organic leads." },
+    { icon: "🌐", severity: "Medium", title: "No Arabic content strategy", detail: "UAE nationals are a primary buyer segment. Less than 10% of posts are in Arabic — missing 30% of the market." },
+    { icon: "🤝", severity: "Medium", title: "Zero influencer / UGC strategy", detail: "No partnerships with UAE lifestyle or property influencers. Competitors are leveraging this heavily for viral reach." },
+    { icon: "💤", severity: "Medium", title: "Twitter/X nearly inactive", detail: "Only 890 followers and 0.9% engagement. Either invest with a daily posting plan or deprioritise entirely." },
+    { icon: "📖", severity: "Medium", title: "Bio & profile optimization weak", detail: "Most platforms have incomplete bios, missing keywords, and no clear CTAs (link in bio, contact info, website)." },
+    { icon: "🔁", severity: "Low", title: "No community engagement system", detail: "Comments go unanswered for 24–48 hours. Algorithm rewards fast responses — a reply cadence is needed." },
+  ];
+
+  const roadmap = [
+    {
+      phase: "Month 1 — Foundation",
+      color: "#EF4444",
+      items: [
+        "Audit & optimise all 7 platform bios with keywords, CTAs, and consistent branding",
+        "Set up YouTube channel — start with 3 property tour videos and 2 market insight videos",
+        "Create posting calendar: Instagram 5×/wk, LinkedIn 3×/wk, Facebook 3×/wk, TikTok 4×/wk",
+        "Launch Arabic content series — minimum 40% of Instagram posts in Arabic",
+        "Implement 1-hour comment reply SLA across all platforms",
+        "Brief 3 UAE lifestyle influencers (100K–500K) for Yas Acres launch collaboration",
+      ],
+    },
+    {
+      phase: "Month 2 — Growth Engine",
+      color: "#F59E0B",
+      items: [
+        "Launch 'OIA Insider' Instagram Reels series — behind-the-scenes project builds",
+        "Run Facebook Lead Generation campaign (AED 5K budget) targeting UAE expats 28–55",
+        "Publish 1 YouTube virtual tour per week — optimise titles for 'Dubai apartments 2025' keywords",
+        "Start client testimonial series — video + carousel format across all platforms",
+        "Launch LinkedIn Thought Leadership series: CEO/team posts on UAE market trends",
+        "Create Snapchat geofilter strategy for showrooms and open-day events",
+      ],
+    },
+    {
+      phase: "Month 3 — Scale & Convert",
+      color: "#10B981",
+      items: [
+        "Activate TikTok ads (Spark Ads) to boost best-performing organic posts",
+        "Launch 'OIA Property Education' series — 10-part content that nurtures leads",
+        "Build Instagram Close Friends / Broadcast Channel for VIP early access to launches",
+        "Partner with 2–3 real estate micro-influencers for UGC campaign",
+        "Launch YouTube Shorts repurposed from TikTok for cross-platform reach",
+        "Track and report: 90-day follower growth target 40K+ across all platforms combined",
+      ],
+    },
+  ];
+
+  const contentMix = [
+    { type: "Property Showcases", pct: 35, color: "#3B82F6", desc: "Renders, aerials, walkthroughs, 360° tours" },
+    { type: "Market Insights", pct: 20, color: "#10B981", desc: "UAE ROI data, investment tips, area guides" },
+    { type: "Client Stories", pct: 15, color: "#8B5CF6", desc: "Testimonials, success stories, lifestyle shots" },
+    { type: "Team & Culture", pct: 10, color: "#F59E0B", desc: "Behind the scenes, team spotlights" },
+    { type: "Promotions & Offers", pct: 10, color: "#EF4444", desc: "Payment plans, exclusive deals, launches" },
+    { type: "Education & Tips", pct: 10, color: "#06B6D4", desc: "Buying guides, FAQs, visa info" },
+  ];
+
+  const brandingChecklist = [
+    { done: true,  item: "Consistent brand colours across all platforms (#OIA palette)" },
+    { done: true,  item: "Professional logo in all profile pictures (1:1 ratio, no text cut off)" },
+    { done: false, item: "Unified bio format: tagline + location + contact + link-in-bio tool" },
+    { done: false, item: "Branded Reels/Story templates (Canva or Figma templates for team)" },
+    { done: false, item: "Pinned post strategy — top 3 posts pinned on Instagram, Facebook, TikTok" },
+    { done: false, item: "YouTube channel art, intro/outro bumpers, and thumbnail template" },
+    { done: false, item: "Brand hashtag set (#OIAProperties #OIADubai #OIARealestate) used on every post" },
+    { done: false, item: "Arabic + English dual-language posts every week" },
   ];
 
   const upcomingPosts = [
-    { title: "OIA Yas Acres — aerial property tour", platform: "Instagram", date: "Today 8PM" },
-    { title: "Why HNW investors choose Dubai over Singapore", platform: "LinkedIn", date: "Tomorrow 9AM" },
-    { title: "Weekend open day announcement", platform: "Facebook", date: "Fri 10AM" },
-    { title: "Dubai skyline property reel", platform: "TikTok", date: "Sat 7PM" },
+    { title: "Yas Acres aerial property tour reel", platform: "Instagram", date: "Today 8PM", color: "#E1306C" },
+    { title: "Why HNW investors choose Dubai over Singapore", platform: "LinkedIn", date: "Tomorrow 9AM", color: "#0A66C2" },
+    { title: "Weekend open day — Yas Acres showroom", platform: "Facebook", date: "Fri 10AM", color: "#1877F2" },
+    { title: "60-sec Dubai luxury lifestyle property tour", platform: "TikTok", date: "Sat 7PM", color: "#EE1D52" },
+    { title: "OIA Properties — Channel Launch video", platform: "YouTube", date: "Sun 12PM", color: "#FF0000" },
   ];
 
-  const PLAT_COLORS: Record<string, string> = { Instagram: "#E1306C", LinkedIn: "#0A66C2", Facebook: "#1877F2", TikTok: "#EE1D52" };
+  const severityColor = (s: string) => s === "High" ? "#EF4444" : s === "Medium" ? "#F59E0B" : "#10B981";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
       {/* KPI cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         {kpis.map(k => (
@@ -871,105 +956,214 @@ function SocialDashboard({ onGoToTab }: { onGoToTab: (t: MainTab) => void }) {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        {/* Platform breakdown */}
-        <div className="db-card">
-          <div className="db-card-title">Platform Overview</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {platformStats.map(p => (
-              <div key={p.platform} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", background: p.color + "10", borderRadius: 8, border: `1px solid ${p.color}25` }}>
-                <span style={{ fontSize: 20 }}>{p.icon}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: p.color }}>{p.platform}</span>
-                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{p.followers} followers</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 10, fontSize: 11 }}>
-                    <span style={{ color: "#10B981", fontWeight: 600 }}>↑ {p.growth}</span>
-                    <span style={{ color: "var(--text-muted)" }}>Engagement: <b style={{ color: p.color }}>{p.engagement}</b></span>
-                  </div>
+      {/* All OIA Social Media Accounts */}
+      <div className="db-card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="db-card-title" style={{ margin: 0 }}>OIA Properties — All Social Accounts</div>
+          <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Chat")}>Ask AI for audit →</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {accounts.map(a => (
+            <div key={a.platform} style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
+              background: a.status === "missing" ? "rgba(239,68,68,0.05)" : "var(--surface-2)",
+              borderRadius: 8, border: `1px solid ${a.status === "missing" ? "#EF444430" : "var(--border)"}`,
+            }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{a.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, fontSize: 13, color: a.color }}>{a.platform}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{a.handle}</span>
                 </div>
+              </div>
+              <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0 }}>
+                {a.followers !== "—" && (
+                  <>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700 }}>{a.followers}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>followers</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#10B981" }}>{a.engagement}</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>eng rate</div>
+                    </div>
+                  </>
+                )}
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 11, color: a.color, fontWeight: 600 }}>→ {a.target}</div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted)" }}>target</div>
+                </div>
+                <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: a.status === "missing" ? "#EF444420" : a.status === "growing" ? "#10B98120" : "var(--surface-2)", color: a.status === "missing" ? "#EF4444" : "var(--text-muted)", whiteSpace: "nowrap" }}>
+                  {a.priority}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Strategist Audit — Strengths / Weaknesses / Roadmap */}
+      <div className="db-card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="db-card-title" style={{ margin: 0 }}>📋 Senior Strategy Audit</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["strengths", "weaknesses", "strategy"] as const).map(t => (
+              <button key={t} onClick={() => setAuditTab(t)}
+                style={{
+                  padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: "pointer", border: "none",
+                  background: auditTab === t ? (t === "strengths" ? "#10B981" : t === "weaknesses" ? "#EF4444" : "#3B82F6") : "var(--surface-2)",
+                  color: auditTab === t ? "#fff" : "var(--text-muted)",
+                }}>
+                {t === "strengths" ? "✅ Strengths" : t === "weaknesses" ? "⚠️ Weaknesses" : "🚀 90-Day Roadmap"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {auditTab === "strengths" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {strengths.map((s, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "rgba(16,185,129,0.06)", borderRadius: 8, border: "1px solid rgba(16,185,129,0.15)" }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{s.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981", marginBottom: 3 }}>{s.title}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{s.detail}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {auditTab === "weaknesses" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {weaknesses.map((w, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "10px 12px", background: "rgba(239,68,68,0.05)", borderRadius: 8, border: `1px solid ${severityColor(w.severity)}25` }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{w.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{w.title}</span>
+                    <span style={{ fontSize: 10, padding: "1px 7px", borderRadius: 99, background: severityColor(w.severity) + "20", color: severityColor(w.severity), fontWeight: 700 }}>{w.severity}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{w.detail}</div>
+                </div>
+                <button className="btn-ghost" style={{ fontSize: 11, flexShrink: 0, alignSelf: "flex-start" }}
+                  onClick={() => onGoToTab("Chat")}>Fix with AI →</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {auditTab === "strategy" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {roadmap.map((phase, i) => (
+              <div key={i} style={{ borderLeft: `3px solid ${phase.color}`, paddingLeft: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: phase.color, marginBottom: 8 }}>{phase.phase}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {phase.items.map((item, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                      <span style={{ color: phase.color, flexShrink: 0, marginTop: 1 }}>→</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button className="btn-primary" style={{ fontSize: 13, marginTop: 4 }} onClick={() => onGoToTab("Chat")}>
+              💬 Ask AI to build a full strategy plan →
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {/* Content Mix */}
+        <div className="db-card">
+          <div className="db-card-title">Recommended Content Mix</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {contentMix.map(c => (
+              <div key={c.type}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600, color: c.color }}>{c.type}</span>
+                  <span style={{ fontWeight: 700 }}>{c.pct}%</span>
+                </div>
+                <div style={{ height: 6, background: "var(--border)", borderRadius: 99, overflow: "hidden", marginBottom: 2 }}>
+                  <div style={{ height: "100%", background: c.color, width: `${c.pct}%`, borderRadius: 99 }} />
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{c.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right column */}
+        {/* Branding Checklist + Upcoming */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Upcoming posts */}
+          <div className="db-card">
+            <div className="db-card-title">Branding Consistency Checklist</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {brandingChecklist.map((b, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12 }}>
+                  <span style={{ color: b.done ? "#10B981" : "#EF4444", flexShrink: 0, marginTop: 1 }}>{b.done ? "✅" : "❌"}</span>
+                  <span style={{ color: b.done ? "var(--text)" : "var(--text-muted)", lineHeight: 1.4 }}>{b.item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="db-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <div className="db-card-title" style={{ margin: 0 }}>Upcoming Posts</div>
               <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => onGoToTab("Calendar")}>Calendar →</button>
             </div>
             {upcomingPosts.map((p, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--border)" }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: PLAT_COLORS[p.platform] ?? COLOR, flexShrink: 0, marginTop: 4 }} />
-                <div style={{ flex: 1 }}>
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 0", borderBottom: i < upcomingPosts.length - 1 ? "1px solid var(--border)" : "none" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: p.color, flexShrink: 0, marginTop: 4 }} />
+                <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", lineHeight: 1.3 }}>{p.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{p.platform} · {p.date}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{p.platform} · {p.date}</div>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      </div>
 
-          {/* Task summary */}
-          <div className="db-card">
-            <div className="db-card-title">Task Overview</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              {[
-                { label: "Open", value: openTasks, color: "#F59E0B" },
-                { label: "Done", value: doneTasks, color: "#10B981" },
-                { label: "Total", value: tasks.length, color: COLOR },
-              ].map(s => (
-                <div key={s.label} style={{ textAlign: "center", padding: "10px 6px", background: "var(--surface-2)", borderRadius: 8 }}>
-                  <div style={{ fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-            <button className="btn-ghost" style={{ width: "100%", marginTop: 10, fontSize: 12 }} onClick={() => onGoToTab("Tasks")}>View all tasks →</button>
+      {/* Task Summary + Quick Actions */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 14 }}>
+        <div className="db-card">
+          <div className="db-card-title">Task Overview</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+            {[
+              { label: "Open", value: openTasks, color: "#F59E0B" },
+              { label: "Done", value: doneTasks, color: "#10B981" },
+              { label: "Total", value: tasks.length, color: COLOR },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: "center", padding: "10px 6px", background: "var(--surface-2)", borderRadius: 8 }}>
+                <div style={{ fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
           </div>
+          <button className="btn-ghost" style={{ width: "100%", fontSize: 12 }} onClick={() => onGoToTab("Tasks")}>View all tasks →</button>
         </div>
-      </div>
 
-      {/* Engagement rate bars */}
-      <div className="db-card">
-        <div className="db-card-title">Engagement Rate by Platform</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          {platformStats.map(p => (
-            <div key={p.platform}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
-                <span style={{ fontWeight: 600, color: p.color }}>{p.platform}</span>
-                <span style={{ fontWeight: 700 }}>{p.engagement}</span>
-              </div>
-              <div style={{ height: 8, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ height: "100%", background: p.color, width: `${Math.min(100, parseFloat(p.engagement) * 12)}%`, borderRadius: 99 }} />
-              </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>Benchmark: 3.5%</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="db-card">
-        <div className="db-card-title">Quick Actions</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-          {[
-            { label: "📅 Build Content Calendar", tab: "Tools" as MainTab },
-            { label: "🚀 Plan Campaign", tab: "Tools" as MainTab },
-            { label: "📊 Engagement Calculator", tab: "Tools" as MainTab },
-            { label: "📋 Add New Task", tab: "Tasks" as MainTab },
-            { label: "🗓️ Add to Calendar", tab: "Calendar" as MainTab },
-            { label: "💬 Ask Social Agent", tab: "Chat" as MainTab },
-          ].map(a => (
-            <button key={a.label} className="btn-ghost"
-              style={{ textAlign: "left", fontSize: 13, padding: "10px 14px", fontWeight: 500 }}
-              onClick={() => onGoToTab(a.tab)}>
-              {a.label}
-            </button>
-          ))}
+        <div className="db-card">
+          <div className="db-card-title">Quick Actions</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            {[
+              { label: "📅 Content Calendar", tab: "Tools" as MainTab },
+              { label: "🚀 Plan Campaign", tab: "Tools" as MainTab },
+              { label: "📊 Engagement Stats", tab: "Tools" as MainTab },
+              { label: "📋 Add Task", tab: "Tasks" as MainTab },
+              { label: "🗓️ Add to Calendar", tab: "Calendar" as MainTab },
+              { label: "💬 Ask Social AI", tab: "Chat" as MainTab },
+            ].map(a => (
+              <button key={a.label} className="btn-ghost"
+                style={{ textAlign: "left", fontSize: 13, padding: "10px 14px", fontWeight: 500 }}
+                onClick={() => onGoToTab(a.tab)}>
+                {a.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
