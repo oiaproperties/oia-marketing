@@ -7,10 +7,11 @@ import { useUiStore } from "@/store/uiStore";
 import { useCredentialsStore } from "@/store/credentialsStore";
 import { useAdsAccountStore } from "@/store/adsAccountStore";
 import {
-  LayoutDashboard, Settings, Moon, Sun, PenTool, Share2,
+  LayoutDashboard, Settings, Moon, Sun, PenTool, Share2, Search,
   Bot, ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
   BarChart2, Layers, ImageIcon, TrendingUp, Target, Zap, KeyRound,
-  Megaphone,
+  Megaphone, Crown, FileText, BarChart, Briefcase, DollarSign,
+  MessageSquare, Wrench, Calendar, CheckSquare,
 } from "lucide-react";
 import { SiGoogleads, SiMeta, SiSnapchat, SiTiktok } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa";
@@ -67,13 +68,46 @@ const ADS_PLATFORMS: {
   },
 ];
 
+// Role-based section definitions
+const DIRECTOR_SUB  = [
+  { label: "Overview",  tab: "Overview",  icon: LayoutDashboard },
+  { label: "Reports",   tab: "Reports",   icon: BarChart },
+  { label: "Team",      tab: "Team",      icon: Users },
+  { label: "Strategy",  tab: "Strategy",  icon: Briefcase },
+  { label: "Budget",    tab: "Budget",    icon: DollarSign },
+  { label: "Chat",      tab: "Chat",      icon: MessageSquare },
+];
+const CONTENT_SUB = [
+  { label: "Dashboard", tab: "Dashboard", icon: LayoutDashboard },
+  { label: "Chat",      tab: "Chat",      icon: MessageSquare },
+  { label: "Articles",  tab: "Articles",  icon: FileText },
+  { label: "Tools",     tab: "Tools",     icon: Wrench },
+  { label: "Tasks",     tab: "Tasks",     icon: CheckSquare },
+  { label: "Calendar",  tab: "Calendar",  icon: Calendar },
+  { label: "Reports",   tab: "Reports",   icon: BarChart },
+];
+const SOCIAL_SUB = [
+  { label: "Dashboard", tab: "Dashboard", icon: LayoutDashboard },
+  { label: "Chat",      tab: "Chat",      icon: MessageSquare },
+  { label: "Tools",     tab: "Tools",     icon: Wrench },
+  { label: "Tasks",     tab: "Tasks",     icon: CheckSquare },
+  { label: "Calendar",  tab: "Calendar",  icon: Calendar },
+  { label: "Reports",   tab: "Reports",   icon: BarChart },
+];
+const SEO_SUB = [
+  { label: "Dashboard", tab: "Dashboard", icon: LayoutDashboard },
+  { label: "Chat",      tab: "Chat",      icon: MessageSquare },
+  { label: "Tools",     tab: "Tools",     icon: Wrench },
+  { label: "Tasks",     tab: "Tasks",     icon: CheckSquare },
+  { label: "Reports",   tab: "Reports",   icon: BarChart },
+];
+
 const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Admin",
   CONTENT_CREATOR: "Content Creator",
   SEO_SPECIALIST: "SEO Specialist",
   SOCIAL_MANAGER: "Social Manager",
 };
-
 const ROLE_COLORS: Record<UserRole, string> = {
   ADMIN: "#B8860B",
   CONTENT_CREATOR: "#8B5CF6",
@@ -81,22 +115,60 @@ const ROLE_COLORS: Record<UserRole, string> = {
   SOCIAL_MANAGER: "#3B82F6",
 };
 
-const CONTENT_SUB = [
-  { label: "Dashboard", tab: "Dashboard" },
-  { label: "Chat",      tab: "Chat" },
-  { label: "Articles",  tab: "Articles" },
-  { label: "Tools",     tab: "Tools" },
-  { label: "Tasks",     tab: "Tasks" },
-  { label: "Reports",   tab: "Reports" },
-];
+// Generic collapsible role section
+function RoleSection({
+  label, color, icon: SectionIcon, subItems, basePath, open, onToggle, pathname,
+}: {
+  label: string; color: string; icon: React.ElementType;
+  subItems: { label: string; tab: string; icon: React.ElementType }[];
+  basePath: string; open: boolean; onToggle: () => void; pathname: string;
+}) {
+  const isActive = pathname.startsWith(basePath);
+  return (
+    <div>
+      <button
+        onClick={onToggle}
+        style={{
+          display: "flex", alignItems: "center", width: "100%",
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+        }}
+      >
+        <div className="db-nav-label" style={{
+          flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6,
+          color: isActive ? color : undefined,
+        }}>
+          <SectionIcon size={11} style={{ color: isActive ? color : undefined, opacity: isActive ? 1 : 0.6 }} />
+          {label}
+        </div>
+        {open
+          ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
+          : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
+      </button>
 
-const SOCIAL_SUB = [
-  { label: "Dashboard", tab: "Dashboard" },
-  { label: "Chat",      tab: "Chat" },
-  { label: "Tools",     tab: "Tools" },
-  { label: "Tasks",     tab: "Tasks" },
-  { label: "Reports",   tab: "Reports" },
-];
+      {open && (
+        <div style={{ paddingLeft: 6 }}>
+          {subItems.map(({ label: lbl, tab, icon: Icon }) => {
+            const href = `${basePath}?tab=${tab}`;
+            const subActive = isActive && typeof window !== "undefined"
+              && new URLSearchParams(window.location.search).get("tab") === tab;
+            return (
+              <Link
+                key={tab}
+                href={href}
+                className={`db-nav-link${subActive ? " active" : ""}`}
+                style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+              >
+                <Icon size={12} className="nav-icon"
+                  style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                <span style={{ color: subActive ? color : undefined }}>{lbl}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -108,8 +180,10 @@ export default function Sidebar() {
 
   const [adsOpen, setAdsOpen] = useState(true);
   const [expandedPlatform, setExpandedPlatform] = useState<string | null>("meta");
+  const [directorOpen, setDirectorOpen] = useState(true);
   const [contentOpen, setContentOpen] = useState(true);
   const [socialOpen, setSocialOpen] = useState(true);
+  const [seoOpen, setSeoOpen] = useState(true);
 
   function connDot(connected: boolean) {
     return (
@@ -122,19 +196,14 @@ export default function Sidebar() {
   }
 
   const platformConnected: Record<string, boolean> = {
-    meta: isMetaConnected,
-    google: isGoogleConnected,
-    snapchat: !!snapchat,
-    tiktok: !!tiktok,
-    linkedin: !!linkedin,
+    meta: isMetaConnected, google: isGoogleConnected,
+    snapchat: !!snapchat, tiktok: !!tiktok, linkedin: !!linkedin,
   };
 
-  const isAdmin = role === "ADMIN";
+  const isAdmin   = role === "ADMIN";
   const isContent = role === "CONTENT_CREATOR";
-  const isSocial = role === "SOCIAL_MANAGER";
-
-  const isContentActive = pathname.startsWith("/agents/content");
-  const isSocialActive = pathname.startsWith("/agents/social");
+  const isSocial  = role === "SOCIAL_MANAGER";
+  const isSeo     = role === "SEO_SPECIALIST";
 
   return (
     <aside className="db-sidebar">
@@ -157,12 +226,10 @@ export default function Sidebar() {
           <div>
             <div className="db-nav-label">OIA ADS</div>
             <Link href="/dashboard" className={`db-nav-link${pathname === "/dashboard" ? " active" : ""}`}>
-              <LayoutDashboard className="nav-icon" size={16} />
-              Dashboard
+              <LayoutDashboard className="nav-icon" size={16} />Dashboard
             </Link>
             <Link href="/setup" className={`db-nav-link${pathname === "/setup" ? " active" : ""}`}>
-              <Settings className="nav-icon" size={16} />
-              Setup &amp; Credentials
+              <Settings className="nav-icon" size={16} />Setup &amp; Credentials
             </Link>
           </div>
         )}
@@ -170,169 +237,100 @@ export default function Sidebar() {
         {/* ── ADS PLATFORMS ─────────────────────────────── */}
         {isAdmin && (
           <div>
-            <button
-              onClick={() => setAdsOpen(v => !v)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                background: "none", border: "none", cursor: "pointer", padding: 0,
-              }}
-            >
+            <button onClick={() => setAdsOpen(v => !v)} style={{
+              display: "flex", alignItems: "center", width: "100%",
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+            }}>
               <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <Megaphone size={11} style={{ opacity: 0.6 }} />
-                ADS
+                <Megaphone size={11} style={{ opacity: 0.6 }} />ADS
               </div>
-              {adsOpen
-                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
+              {adsOpen ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
+                       : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
             </button>
-
-            {adsOpen && (
-              <div>
-                {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
-                  const connected = platformConnected[id];
-                  const isAnySubActive = id === "meta"
-                    ? pathname.startsWith("/meta")
-                    : id === "google"
-                      ? pathname.startsWith("/google")
-                      : sub.some(s => pathname.startsWith(s.href));
-                  const isExpanded = expandedPlatform === id;
-
-                  return (
-                    <div key={id}>
-                      <button
-                        onClick={() => setExpandedPlatform(isExpanded ? null : id)}
-                        className={`db-nav-link${isAnySubActive ? " active" : ""}`}
-                        style={{
-                          width: "100%", background: "none", border: "none",
-                          cursor: "pointer", textAlign: "left",
-                          display: "flex", alignItems: "center",
-                        }}
-                      >
-                        <Icon size={14} className="nav-icon"
-                          style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
-                        <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
-                        {connDot(connected)}
-                        {isExpanded
-                          ? <ChevronDown size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
-                          : <ChevronRight size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
-                      </button>
-
-                      {isExpanded && (
-                        <div style={{ paddingLeft: 20 }}>
-                          {sub.map((item, idx) => {
-                            const subActive = pathname.startsWith(item.href);
-                            const SubIcon = item.icon;
-                            return (
-                              <Link
-                                key={`${item.href}-${idx}`}
-                                href={item.href}
-                                className={`db-nav-link${subActive ? " active" : ""}`}
-                                style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                              >
-                                <SubIcon size={11} className="nav-icon"
-                                  style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
-                                <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
+            {adsOpen && ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
+              const connected = platformConnected[id];
+              const isAnySubActive = id === "meta" ? pathname.startsWith("/meta")
+                : id === "google" ? pathname.startsWith("/google")
+                : sub.some(s => pathname.startsWith(s.href));
+              const isExpanded = expandedPlatform === id;
+              return (
+                <div key={id}>
+                  <button onClick={() => setExpandedPlatform(isExpanded ? null : id)}
+                    className={`db-nav-link${isAnySubActive ? " active" : ""}`}
+                    style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center" }}>
+                    <Icon size={14} className="nav-icon" style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
+                    {connDot(connected)}
+                    {isExpanded ? <ChevronDown size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
+                                : <ChevronRight size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
+                  </button>
+                  {isExpanded && (
+                    <div style={{ paddingLeft: 20 }}>
+                      {sub.map((item, idx) => {
+                        const subActive = pathname.startsWith(item.href);
+                        const SubIcon = item.icon;
+                        return (
+                          <Link key={`${item.href}-${idx}`} href={item.href}
+                            className={`db-nav-link${subActive ? " active" : ""}`}
+                            style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}>
+                            <SubIcon size={11} className="nav-icon" style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                            <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  )}
+                </div>
+              );
+            })}
           </div>
+        )}
+
+        {/* ── MARKETING DIRECTOR ────────────────────────── */}
+        {isAdmin && (
+          <RoleSection
+            label="MARKETING DIRECTOR" color="#B8860B" icon={Crown}
+            subItems={DIRECTOR_SUB} basePath="/agents/director"
+            open={directorOpen} onToggle={() => setDirectorOpen(v => !v)}
+            pathname={pathname}
+          />
         )}
 
         {/* ── CONTENT CREATOR ───────────────────────────── */}
         {(isAdmin || isContent) && (
-          <div>
-            <button
-              onClick={() => setContentOpen(v => !v)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                background: "none", border: "none", cursor: "pointer", padding: 0,
-              }}
-            >
-              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <PenTool size={11} style={{ opacity: 0.6 }} />
-                CONTENT CREATOR
-              </div>
-              {contentOpen
-                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
-            </button>
-
-            {contentOpen && (
-              <div style={{ paddingLeft: 4 }}>
-                {CONTENT_SUB.map(({ label, tab }) => {
-                  const href = `/agents/content?tab=${tab}`;
-                  const active = isContentActive && (
-                    typeof window !== "undefined"
-                      ? new URLSearchParams(window.location.search).get("tab") === tab
-                      : false
-                  );
-                  return (
-                    <Link
-                      key={tab}
-                      href={`/agents/content?tab=${tab}`}
-                      className={`db-nav-link${isContentActive && pathname === "/agents/content" && tab === "Dashboard" && typeof window !== "undefined" && !window.location.search ? " active" : ""}`}
-                      style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                    >
-                      <span style={{ color: "#8B5CF6", fontSize: 10, marginRight: 2 }}>▸</span>
-                      {label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <RoleSection
+            label="CONTENT CREATOR" color="#8B5CF6" icon={PenTool}
+            subItems={CONTENT_SUB} basePath="/agents/content"
+            open={contentOpen} onToggle={() => setContentOpen(v => !v)}
+            pathname={pathname}
+          />
         )}
 
         {/* ── SOCIAL MEDIA ──────────────────────────────── */}
         {(isAdmin || isSocial) && (
-          <div>
-            <button
-              onClick={() => setSocialOpen(v => !v)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                background: "none", border: "none", cursor: "pointer", padding: 0,
-              }}
-            >
-              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                <Share2 size={11} style={{ opacity: 0.6 }} />
-                SOCIAL MEDIA
-              </div>
-              {socialOpen
-                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
-            </button>
+          <RoleSection
+            label="SOCIAL MEDIA" color="#3B82F6" icon={Share2}
+            subItems={SOCIAL_SUB} basePath="/agents/social"
+            open={socialOpen} onToggle={() => setSocialOpen(v => !v)}
+            pathname={pathname}
+          />
+        )}
 
-            {socialOpen && (
-              <div style={{ paddingLeft: 4 }}>
-                {SOCIAL_SUB.map(({ label, tab }) => (
-                  <Link
-                    key={tab}
-                    href={`/agents/social?tab=${tab}`}
-                    className={`db-nav-link${isSocialActive ? "" : ""}`}
-                    style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                  >
-                    <span style={{ color: "#3B82F6", fontSize: 10, marginRight: 2 }}>▸</span>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* ── SEO SPECIALIST ────────────────────────────── */}
+        {(isAdmin || isSeo) && (
+          <RoleSection
+            label="SEO SPECIALIST" color="#10B981" icon={Search}
+            subItems={SEO_SUB} basePath="/agents/seo"
+            open={seoOpen} onToggle={() => setSeoOpen(v => !v)}
+            pathname={pathname}
+          />
         )}
 
         {/* ── AI ────────────────────────────────────────── */}
         <div>
           <div className="db-nav-label">AI</div>
           <Link href="/ai" className={`db-nav-link${pathname === "/ai" ? " active" : ""}`}>
-            <Bot className="nav-icon" size={16} />
-            AI Assistant
+            <Bot className="nav-icon" size={16} />AI Assistant
           </Link>
         </div>
 
@@ -340,8 +338,7 @@ export default function Sidebar() {
         <div>
           <div className="db-nav-label">TASKS</div>
           <Link href="/tasks" className={`db-nav-link${pathname === "/tasks" ? " active" : ""}`}>
-            <KanbanSquare className="nav-icon" size={16} />
-            Task Board
+            <KanbanSquare className="nav-icon" size={16} />Task Board
           </Link>
         </div>
 
@@ -350,8 +347,7 @@ export default function Sidebar() {
           <div>
             <div className="db-nav-label">ADMIN</div>
             <Link href="/team" className={`db-nav-link${pathname === "/team" ? " active" : ""}`}>
-              <Users className="nav-icon" size={16} />
-              Team
+              <Users className="nav-icon" size={16} />Team
             </Link>
           </div>
         )}
