@@ -118,6 +118,12 @@ function ContentToolsPanel({ onSendToChat }: { onSendToChat: (msg: string) => vo
   const [engCalc, setEngCalc] = useState({ followers: "", likes: "", comments: "", shares: "" });
   const [engResult, setEngResult] = useState<{ rate: number; benchmark: number; rating: string } | null>(null);
 
+  // Extract Content & Images tool state
+  const [extractUrl, setExtractUrl] = useState("");
+  const [extractScope, setExtractScope] = useState("OIA website");
+  const [extractGoal, setExtractGoal] = useState("content strategy");
+  const [extractOpts, setExtractOpts] = useState({ text: true, images: true, meta: true, links: false, cta: true });
+
   const toggle = (id: string) => setExpanded(expanded === id ? null : id);
 
   const generateBrief = () => {
@@ -136,6 +142,82 @@ function ContentToolsPanel({ onSendToChat }: { onSendToChat: (msg: string) => vo
   };
 
   const tools = [
+    { id: "extract", icon: "🔍", title: "Extract Content & Images", desc: "Extract content, images & metadata from any URL — OIA site, competitor sites, or any web page", content: (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ padding: "8px 12px", background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+          🔍 Paste any URL — OIA property pages, competitor listings, blog posts, or any site. The AI will extract structured content, image descriptions, CTAs, and meta data, then generate a content strategy.
+        </div>
+
+        <input
+          className="db-input"
+          placeholder="https://oiaproperties.com/project/... or any URL"
+          value={extractUrl}
+          onChange={e => setExtractUrl(e.target.value)}
+        />
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div>
+            <label style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, display: "block" }}>Source</label>
+            <select className="db-input" value={extractScope} onChange={e => setExtractScope(e.target.value)}>
+              <option>OIA website</option>
+              <option>Competitor site</option>
+              <option>Property listing portal</option>
+              <option>Blog / news article</option>
+              <option>Social media post</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4, display: "block" }}>Goal</label>
+            <select className="db-input" value={extractGoal} onChange={e => setExtractGoal(e.target.value)}>
+              <option value="content strategy">Content strategy</option>
+              <option value="competitor analysis">Competitor analysis</option>
+              <option value="repurpose for social media">Repurpose for social</option>
+              <option value="property listing copy">Property listing copy</option>
+              <option value="image caption generation">Image captions</option>
+              <option value="SEO analysis">SEO analysis</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>What to extract</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {([
+              { key: "text", label: "📄 Text Content" },
+              { key: "images", label: "🖼️ Images" },
+              { key: "meta", label: "🏷️ Meta & SEO" },
+              { key: "cta", label: "📣 CTAs" },
+              { key: "links", label: "🔗 Links" },
+            ] as { key: keyof typeof extractOpts; label: string }[]).map(({ key, label }) => (
+              <label key={key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, cursor: "pointer",
+                padding: "4px 10px", borderRadius: 20, border: `1px solid ${extractOpts[key] ? "#8B5CF6" : "rgba(255,255,255,0.1)"}`,
+                background: extractOpts[key] ? "rgba(139,92,246,0.1)" : "transparent", color: extractOpts[key] ? "#8B5CF6" : "var(--text-muted)",
+                transition: "all 0.15s",
+              }}>
+                <input type="checkbox" checked={extractOpts[key]} onChange={e => setExtractOpts(p => ({ ...p, [key]: e.target.checked }))}
+                  style={{ display: "none" }} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <button
+          className="btn-primary"
+          style={{ fontSize: 13 }}
+          disabled={!extractUrl.trim()}
+          onClick={() => {
+            const what = Object.entries(extractOpts).filter(([, v]) => v).map(([k]) =>
+              ({ text: "all text content and headings", images: "image URLs and alt text descriptions", meta: "meta title, description, keywords, OG tags", cta: "calls-to-action and conversion elements", links: "internal and external links" }[k])
+            ).join("; ");
+            onSendToChat(`Extract and analyse the following from this URL: ${extractUrl}\n\nSource type: ${extractScope}\nExtract: ${what}\n\nGoal: ${extractGoal}\n\nPlease:\n1. Extract and organize all the content\n2. List all images with descriptions\n3. Identify key messages and CTAs\n4. Summarise what OIA Properties can learn or repurpose from this\n5. Suggest 3 specific content pieces we can create based on this extraction`);
+          }}
+        >
+          🔍 Extract &amp; Analyse with AI →
+        </button>
+      </div>
+    )},
     { id: "blog", icon: "📝", title: "Blog Post Generator", desc: "AI-written SEO blog posts for any topic", content: (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <input className="db-input" placeholder="Blog topic (e.g. Dubai luxury real estate investment 2026)" value={blog.topic} onChange={e => setBlog(p => ({ ...p, topic: e.target.value }))} />
@@ -1017,7 +1099,15 @@ const TAB_ICONS: Partial<Record<Tab, React.ReactNode>> = {
 };
 
 export default function ContentCreatorPage() {
-  const [tab, setTab] = useState<Tab>("Dashboard");
+  // Read ?tab= from URL to support sidebar sub-links
+  const initialTab = (): Tab => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+      if (p && ["Dashboard","Chat","Articles","New Ideas","Tools","Tasks","Kanban","Calendar","Todo","Reports"].includes(p)) return p;
+    }
+    return "Dashboard";
+  };
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [autoSend, setAutoSend] = useState<string | undefined>();
 
   const handleSendToChat = (msg: string) => { setAutoSend(msg); setTab("Chat"); };

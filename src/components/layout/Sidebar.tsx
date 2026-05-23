@@ -7,19 +7,15 @@ import { useUiStore } from "@/store/uiStore";
 import { useCredentialsStore } from "@/store/credentialsStore";
 import { useAdsAccountStore } from "@/store/adsAccountStore";
 import {
-  LayoutDashboard, Settings, Moon, Sun,
+  LayoutDashboard, Settings, Moon, Sun, PenTool, Share2,
   Bot, ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
   BarChart2, Layers, ImageIcon, TrendingUp, Target, Zap, KeyRound,
+  Megaphone,
 } from "lucide-react";
 import { SiGoogleads, SiMeta, SiSnapchat, SiTiktok } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa";
 
 type UserRole = "ADMIN" | "CONTENT_CREATOR" | "SEO_SPECIALIST" | "SOCIAL_MANAGER";
-
-const OIA_NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/setup",     icon: Settings,        label: "Setup & Credentials" },
-];
 
 const ADS_PLATFORMS: {
   id: string; label: string; icon: React.ElementType; color: string;
@@ -85,6 +81,23 @@ const ROLE_COLORS: Record<UserRole, string> = {
   SOCIAL_MANAGER: "#3B82F6",
 };
 
+const CONTENT_SUB = [
+  { label: "Dashboard", tab: "Dashboard" },
+  { label: "Chat",      tab: "Chat" },
+  { label: "Articles",  tab: "Articles" },
+  { label: "Tools",     tab: "Tools" },
+  { label: "Tasks",     tab: "Tasks" },
+  { label: "Reports",   tab: "Reports" },
+];
+
+const SOCIAL_SUB = [
+  { label: "Dashboard", tab: "Dashboard" },
+  { label: "Chat",      tab: "Chat" },
+  { label: "Tools",     tab: "Tools" },
+  { label: "Tasks",     tab: "Tasks" },
+  { label: "Reports",   tab: "Reports" },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useUiStore();
@@ -93,7 +106,10 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const role = ((session?.user as any)?.role as UserRole) || "ADMIN";
 
+  const [adsOpen, setAdsOpen] = useState(true);
   const [expandedPlatform, setExpandedPlatform] = useState<string | null>("meta");
+  const [contentOpen, setContentOpen] = useState(true);
+  const [socialOpen, setSocialOpen] = useState(true);
 
   function connDot(connected: boolean) {
     return (
@@ -114,6 +130,11 @@ export default function Sidebar() {
   };
 
   const isAdmin = role === "ADMIN";
+  const isContent = role === "CONTENT_CREATOR";
+  const isSocial = role === "SOCIAL_MANAGER";
+
+  const isContentActive = pathname.startsWith("/agents/content");
+  const isSocialActive = pathname.startsWith("/agents/social");
 
   return (
     <aside className="db-sidebar">
@@ -131,80 +152,182 @@ export default function Sidebar() {
 
       <nav className="db-nav">
 
-        {/* OIA ADS — Dashboard + Setup + all ad platforms */}
+        {/* ── OIA ADS ───────────────────────────────────── */}
         {isAdmin && (
           <div>
             <div className="db-nav-label">OIA ADS</div>
-
-            {/* Top nav links */}
-            {OIA_NAV.map(({ href, icon: Icon, label }) => (
-              <Link key={href} href={href} className={`db-nav-link${pathname === href ? " active" : ""}`}>
-                <Icon className="nav-icon" size={16} />
-                {label}
-              </Link>
-            ))}
-
-            {/* Ad Platforms — accordion, directly inside OIA ADS */}
-            <div style={{ marginTop: 4 }}>
-              {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
-                const connected = platformConnected[id];
-                const isAnySubActive = id === "meta"
-                  ? pathname.startsWith("/meta")
-                  : id === "google"
-                    ? pathname.startsWith("/google")
-                    : sub.some(s => pathname.startsWith(s.href));
-                const isExpanded = expandedPlatform === id;
-
-                return (
-                  <div key={id}>
-                    {/* Platform row */}
-                    <button
-                      onClick={() => setExpandedPlatform(isExpanded ? null : id)}
-                      className={`db-nav-link${isAnySubActive ? " active" : ""}`}
-                      style={{
-                        width: "100%", background: "none", border: "none",
-                        cursor: "pointer", textAlign: "left",
-                        display: "flex", alignItems: "center",
-                      }}
-                    >
-                      <Icon size={14} className="nav-icon"
-                        style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
-                      <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
-                      {connDot(connected)}
-                      {isExpanded
-                        ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
-                        : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
-                    </button>
-
-                    {/* Sub-links */}
-                    {isExpanded && (
-                      <div style={{ paddingLeft: 20 }}>
-                        {sub.map((item, idx) => {
-                          const subActive = pathname.startsWith(item.href);
-                          const SubIcon = item.icon;
-                          return (
-                            <Link
-                              key={`${item.href}-${idx}`}
-                              href={item.href}
-                              className={`db-nav-link${subActive ? " active" : ""}`}
-                              style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                            >
-                              <SubIcon size={11} className="nav-icon"
-                                style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
-                              <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <Link href="/dashboard" className={`db-nav-link${pathname === "/dashboard" ? " active" : ""}`}>
+              <LayoutDashboard className="nav-icon" size={16} />
+              Dashboard
+            </Link>
+            <Link href="/setup" className={`db-nav-link${pathname === "/setup" ? " active" : ""}`}>
+              <Settings className="nav-icon" size={16} />
+              Setup &amp; Credentials
+            </Link>
           </div>
         )}
 
-        {/* AI */}
+        {/* ── ADS PLATFORMS ─────────────────────────────── */}
+        {isAdmin && (
+          <div>
+            <button
+              onClick={() => setAdsOpen(v => !v)}
+              style={{
+                display: "flex", alignItems: "center", width: "100%",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+              }}
+            >
+              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <Megaphone size={11} style={{ opacity: 0.6 }} />
+                ADS
+              </div>
+              {adsOpen
+                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
+                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
+            </button>
+
+            {adsOpen && (
+              <div>
+                {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
+                  const connected = platformConnected[id];
+                  const isAnySubActive = id === "meta"
+                    ? pathname.startsWith("/meta")
+                    : id === "google"
+                      ? pathname.startsWith("/google")
+                      : sub.some(s => pathname.startsWith(s.href));
+                  const isExpanded = expandedPlatform === id;
+
+                  return (
+                    <div key={id}>
+                      <button
+                        onClick={() => setExpandedPlatform(isExpanded ? null : id)}
+                        className={`db-nav-link${isAnySubActive ? " active" : ""}`}
+                        style={{
+                          width: "100%", background: "none", border: "none",
+                          cursor: "pointer", textAlign: "left",
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <Icon size={14} className="nav-icon"
+                          style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
+                        {connDot(connected)}
+                        {isExpanded
+                          ? <ChevronDown size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
+                          : <ChevronRight size={10} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
+                      </button>
+
+                      {isExpanded && (
+                        <div style={{ paddingLeft: 20 }}>
+                          {sub.map((item, idx) => {
+                            const subActive = pathname.startsWith(item.href);
+                            const SubIcon = item.icon;
+                            return (
+                              <Link
+                                key={`${item.href}-${idx}`}
+                                href={item.href}
+                                className={`db-nav-link${subActive ? " active" : ""}`}
+                                style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                              >
+                                <SubIcon size={11} className="nav-icon"
+                                  style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                                <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── CONTENT CREATOR ───────────────────────────── */}
+        {(isAdmin || isContent) && (
+          <div>
+            <button
+              onClick={() => setContentOpen(v => !v)}
+              style={{
+                display: "flex", alignItems: "center", width: "100%",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+              }}
+            >
+              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <PenTool size={11} style={{ opacity: 0.6 }} />
+                CONTENT CREATOR
+              </div>
+              {contentOpen
+                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
+                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
+            </button>
+
+            {contentOpen && (
+              <div style={{ paddingLeft: 4 }}>
+                {CONTENT_SUB.map(({ label, tab }) => {
+                  const href = `/agents/content?tab=${tab}`;
+                  const active = isContentActive && (
+                    typeof window !== "undefined"
+                      ? new URLSearchParams(window.location.search).get("tab") === tab
+                      : false
+                  );
+                  return (
+                    <Link
+                      key={tab}
+                      href={`/agents/content?tab=${tab}`}
+                      className={`db-nav-link${isContentActive && pathname === "/agents/content" && tab === "Dashboard" && typeof window !== "undefined" && !window.location.search ? " active" : ""}`}
+                      style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                    >
+                      <span style={{ color: "#8B5CF6", fontSize: 10, marginRight: 2 }}>▸</span>
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── SOCIAL MEDIA ──────────────────────────────── */}
+        {(isAdmin || isSocial) && (
+          <div>
+            <button
+              onClick={() => setSocialOpen(v => !v)}
+              style={{
+                display: "flex", alignItems: "center", width: "100%",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+              }}
+            >
+              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <Share2 size={11} style={{ opacity: 0.6 }} />
+                SOCIAL MEDIA
+              </div>
+              {socialOpen
+                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
+                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
+            </button>
+
+            {socialOpen && (
+              <div style={{ paddingLeft: 4 }}>
+                {SOCIAL_SUB.map(({ label, tab }) => (
+                  <Link
+                    key={tab}
+                    href={`/agents/social?tab=${tab}`}
+                    className={`db-nav-link${isSocialActive ? "" : ""}`}
+                    style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                  >
+                    <span style={{ color: "#3B82F6", fontSize: 10, marginRight: 2 }}>▸</span>
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── AI ────────────────────────────────────────── */}
         <div>
           <div className="db-nav-label">AI</div>
           <Link href="/ai" className={`db-nav-link${pathname === "/ai" ? " active" : ""}`}>
@@ -213,7 +336,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* TASKS */}
+        {/* ── TASKS ─────────────────────────────────────── */}
         <div>
           <div className="db-nav-label">TASKS</div>
           <Link href="/tasks" className={`db-nav-link${pathname === "/tasks" ? " active" : ""}`}>
@@ -222,7 +345,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* ADMIN */}
+        {/* ── ADMIN ─────────────────────────────────────── */}
         {isAdmin && (
           <div>
             <div className="db-nav-label">ADMIN</div>

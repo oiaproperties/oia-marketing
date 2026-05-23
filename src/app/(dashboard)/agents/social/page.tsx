@@ -985,7 +985,14 @@ const TAB_ICONS: Partial<Record<MainTab, React.ReactNode>> = {
 };
 
 export default function SocialMediaPage() {
-  const [tab, setTab] = useState<MainTab>("Dashboard");
+  const initialTab = (): MainTab => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("tab") as MainTab | null;
+      if (p && ["Dashboard","Chat","Tools","Tasks","Kanban","Calendar","Todo","Reports"].includes(p)) return p;
+    }
+    return "Dashboard";
+  };
+  const [tab, setTab] = useState<MainTab>(initialTab);
   const [autoSend, setAutoSend] = useState<string | undefined>();
 
   const handleSendToChat = (msg: string) => { setAutoSend(msg); setTab("Chat"); };
