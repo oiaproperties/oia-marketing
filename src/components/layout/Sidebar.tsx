@@ -8,8 +8,7 @@ import { useCredentialsStore } from "@/store/credentialsStore";
 import { useAdsAccountStore } from "@/store/adsAccountStore";
 import {
   LayoutDashboard, Settings, Moon, Sun,
-  Bot, Search, PenTool, Share2, LayoutGrid,
-  ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
+  Bot, ChevronDown, ChevronRight, Users, LogOut, KanbanSquare,
   BarChart2, Layers, ImageIcon, TrendingUp, Target, Zap, KeyRound,
 } from "lucide-react";
 import { SiGoogleads, SiMeta, SiSnapchat, SiTiktok } from "react-icons/si";
@@ -18,13 +17,12 @@ import { FaLinkedinIn } from "react-icons/fa";
 type UserRole = "ADMIN" | "CONTENT_CREATOR" | "SEO_SPECIALIST" | "SOCIAL_MANAGER";
 
 const OIA_NAV = [
-  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/setup",      icon: Settings,        label: "Setup & Credentials" },
-  { href: "/agents/seo", icon: Search,          label: "SEO Specialist" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/setup",     icon: Settings,        label: "Setup & Credentials" },
 ];
 
 const ADS_PLATFORMS: {
-  id: string; label: string; icon: React.ElementType; color: string; textDark?: boolean;
+  id: string; label: string; icon: React.ElementType; color: string;
   sub: { href: string; label: string; icon: React.ElementType }[];
 }[] = [
   {
@@ -48,35 +46,29 @@ const ADS_PLATFORMS: {
     ],
   },
   {
-    id: "snapchat", label: "Snapchat Ads", icon: SiSnapchat, color: "#FFFC00", textDark: true,
+    id: "snapchat", label: "Snapchat Ads", icon: SiSnapchat, color: "#FFFC00",
     sub: [
-      { href: "/ads/snapchat", label: "Campaigns", icon: Layers },
-      { href: "/ads/snapchat", label: "Ad Sets",   icon: Target },
-      { href: "/ads/snapchat", label: "Ads",       icon: ImageIcon },
+      { href: "/ads/snapchat/campaigns", label: "Campaigns", icon: Layers },
+      { href: "/ads/snapchat/adsets",    label: "Ad Sets",   icon: Target },
+      { href: "/ads/snapchat/ads",       label: "Ads",       icon: ImageIcon },
     ],
   },
   {
     id: "tiktok", label: "TikTok Ads", icon: SiTiktok, color: "#EE1D52",
     sub: [
-      { href: "/ads/tiktok", label: "Campaigns", icon: Layers },
-      { href: "/ads/tiktok", label: "Ad Groups", icon: Target },
-      { href: "/ads/tiktok", label: "Ads",       icon: ImageIcon },
+      { href: "/ads/tiktok/campaigns", label: "Campaigns", icon: Layers },
+      { href: "/ads/tiktok/adgroups",  label: "Ad Groups", icon: Target },
+      { href: "/ads/tiktok/ads",       label: "Ads",       icon: ImageIcon },
     ],
   },
   {
     id: "linkedin", label: "LinkedIn Ads", icon: FaLinkedinIn, color: "#0A66C2",
     sub: [
-      { href: "/ads/linkedin", label: "Campaigns",  icon: Layers },
-      { href: "/ads/linkedin", label: "Creatives",  icon: ImageIcon },
-      { href: "/ads/linkedin", label: "Analytics",  icon: BarChart2 },
+      { href: "/ads/linkedin/campaigns",  label: "Campaigns",  icon: Layers },
+      { href: "/ads/linkedin/creatives",  label: "Creatives",  icon: ImageIcon },
+      { href: "/ads/linkedin/analytics",  label: "Analytics",  icon: BarChart2 },
     ],
   },
-];
-
-const AGENT_NAV = [
-  { href: "/agents",         icon: LayoutGrid, label: "All Agents" },
-  { href: "/agents/content", icon: PenTool,    label: "Content Creator" },
-  { href: "/agents/social",  icon: Share2,     label: "Social Media" },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -101,8 +93,6 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const role = ((session?.user as any)?.role as UserRole) || "ADMIN";
 
-  const [adsOpen, setAdsOpen] = useState(true);
-  const [agentsOpen, setAgentsOpen] = useState(true);
   const [expandedPlatform, setExpandedPlatform] = useState<string | null>("meta");
 
   function connDot(connected: boolean) {
@@ -124,9 +114,6 @@ export default function Sidebar() {
   };
 
   const isAdmin = role === "ADMIN";
-  const isContent = role === "CONTENT_CREATOR";
-  const isSeo = role === "SEO_SPECIALIST";
-  const isSocial = role === "SOCIAL_MANAGER";
 
   return (
     <aside className="db-sidebar">
@@ -144,155 +131,78 @@ export default function Sidebar() {
 
       <nav className="db-nav">
 
-        {/* OIA ADS — admin only */}
+        {/* OIA ADS — Dashboard + Setup + all ad platforms */}
         {isAdmin && (
           <div>
             <div className="db-nav-label">OIA ADS</div>
-            {OIA_NAV.map(({ href, icon: Icon, label }) => {
-              const active = href === "/dashboard" || href === "/setup"
-                ? pathname === href
-                : pathname.startsWith(href);
-              return (
-                <Link key={href} href={href} className={`db-nav-link${active ? " active" : ""}`}>
-                  <Icon className="nav-icon" size={16} />
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-        )}
 
-        {/* ADS PLATFORMS — admin only, all platforms always visible when open */}
-        {isAdmin && (
-          <div>
-            {/* Section header toggle */}
-            <button
-              onClick={() => setAdsOpen(v => !v)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                background: "none", border: "none", cursor: "pointer", padding: 0,
-              }}
-            >
-              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0 }}>ADS PLATFORMS</div>
-              {adsOpen
-                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
-            </button>
+            {/* Top nav links */}
+            {OIA_NAV.map(({ href, icon: Icon, label }) => (
+              <Link key={href} href={href} className={`db-nav-link${pathname === href ? " active" : ""}`}>
+                <Icon className="nav-icon" size={16} />
+                {label}
+              </Link>
+            ))}
 
-            {adsOpen && (
-              <div>
-                {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
-                  const connected = platformConnected[id];
-                  const isAnySubActive = id === "meta"
-                    ? pathname.startsWith("/meta")
-                    : id === "google"
-                      ? pathname.startsWith("/google")
-                      : sub.some(s => pathname === s.href);
-                  const isExpanded = expandedPlatform === id;
+            {/* Ad Platforms — accordion, directly inside OIA ADS */}
+            <div style={{ marginTop: 4 }}>
+              {ADS_PLATFORMS.map(({ id, label, icon: Icon, color, sub }) => {
+                const connected = platformConnected[id];
+                const isAnySubActive = id === "meta"
+                  ? pathname.startsWith("/meta")
+                  : id === "google"
+                    ? pathname.startsWith("/google")
+                    : sub.some(s => pathname.startsWith(s.href));
+                const isExpanded = expandedPlatform === id;
 
-                  return (
-                    <div key={id}>
-                      {/* Platform row — looks like a db-nav-link with a chevron */}
-                      <button
-                        onClick={() => setExpandedPlatform(isExpanded ? null : id)}
-                        className={`db-nav-link${isAnySubActive ? " active" : ""}`}
-                        style={{
-                          width: "100%", background: "none", border: "none",
-                          cursor: "pointer", textAlign: "left",
-                          display: "flex", alignItems: "center",
-                        }}
-                      >
-                        <Icon size={14} className="nav-icon" style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
-                        <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
-                        {connDot(connected)}
-                        {isExpanded
-                          ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
-                          : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
-                      </button>
-
-                      {/* Sub-links */}
-                      {isExpanded && (
-                        <div style={{ paddingLeft: 20 }}>
-                          {sub.map((item, idx) => {
-                            const subActive = id === "meta"
-                              ? pathname.startsWith(item.href)
-                              : id === "google"
-                                ? pathname.startsWith(item.href)
-                                : pathname === item.href;
-                            const SubIcon = item.icon;
-                            return (
-                              <Link
-                                key={`${item.href}-${idx}`}
-                                href={item.href}
-                                className={`db-nav-link${subActive ? " active" : ""}`}
-                                style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
-                              >
-                                <SubIcon size={11} className="nav-icon"
-                                  style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
-                                <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* MARKETING AGENTS — filtered by role */}
-        <div>
-          {isAdmin && (
-            <button
-              onClick={() => setAgentsOpen(v => !v)}
-              style={{
-                display: "flex", alignItems: "center", width: "100%",
-                background: "none", border: "none", cursor: "pointer", padding: 0,
-              }}
-            >
-              <div className="db-nav-label" style={{ flex: 1, marginBottom: 0 }}>MARKETING AGENTS</div>
-              {agentsOpen
-                ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />
-                : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginRight: 4 }} />}
-            </button>
-          )}
-          {!isAdmin && <div className="db-nav-label">MY WORKSPACE</div>}
-
-          {(isAdmin ? agentsOpen : true) && (
-            <>
-              {isAdmin && AGENT_NAV.map(({ href, icon: Icon, label }) => {
-                const active = pathname === href || (href !== "/agents" && pathname.startsWith(href));
                 return (
-                  <Link key={href} href={href} className={`db-nav-link${active ? " active" : ""}`}>
-                    <Icon className="nav-icon" size={16} />
-                    {label}
-                  </Link>
+                  <div key={id}>
+                    {/* Platform row */}
+                    <button
+                      onClick={() => setExpandedPlatform(isExpanded ? null : id)}
+                      className={`db-nav-link${isAnySubActive ? " active" : ""}`}
+                      style={{
+                        width: "100%", background: "none", border: "none",
+                        cursor: "pointer", textAlign: "left",
+                        display: "flex", alignItems: "center",
+                      }}
+                    >
+                      <Icon size={14} className="nav-icon"
+                        style={{ color: isAnySubActive ? color : undefined, flexShrink: 0 }} />
+                      <span style={{ flex: 1, color: isAnySubActive ? color : undefined }}>{label}</span>
+                      {connDot(connected)}
+                      {isExpanded
+                        ? <ChevronDown size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />
+                        : <ChevronRight size={11} style={{ color: "var(--text-muted)", marginLeft: 2, flexShrink: 0 }} />}
+                    </button>
+
+                    {/* Sub-links */}
+                    {isExpanded && (
+                      <div style={{ paddingLeft: 20 }}>
+                        {sub.map((item, idx) => {
+                          const subActive = pathname.startsWith(item.href);
+                          const SubIcon = item.icon;
+                          return (
+                            <Link
+                              key={`${item.href}-${idx}`}
+                              href={item.href}
+                              className={`db-nav-link${subActive ? " active" : ""}`}
+                              style={{ fontSize: 12, paddingTop: 4, paddingBottom: 4 }}
+                            >
+                              <SubIcon size={11} className="nav-icon"
+                                style={{ color: subActive ? color : undefined, flexShrink: 0 }} />
+                              <span style={{ color: subActive ? color : undefined }}>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
-              {isContent && (
-                <Link href="/agents/content" className={`db-nav-link${pathname.startsWith("/agents/content") ? " active" : ""}`}>
-                  <PenTool className="nav-icon" size={16} />
-                  Content Creator
-                </Link>
-              )}
-              {isSeo && (
-                <Link href="/agents/seo" className={`db-nav-link${pathname.startsWith("/agents/seo") ? " active" : ""}`}>
-                  <Search className="nav-icon" size={16} />
-                  SEO Specialist
-                </Link>
-              )}
-              {isSocial && (
-                <Link href="/agents/social" className={`db-nav-link${pathname.startsWith("/agents/social") ? " active" : ""}`}>
-                  <Share2 className="nav-icon" size={16} />
-                  Social Media
-                </Link>
-              )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
 
         {/* AI */}
         <div>
